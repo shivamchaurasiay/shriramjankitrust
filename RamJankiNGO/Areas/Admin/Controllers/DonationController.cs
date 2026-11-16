@@ -51,6 +51,29 @@ namespace RamJankiNGO.Areas.Admin.Controllers
         {
             if (!CheckAuth()) return RedirectToAction("Login", "Account", new { area = "Admin" });
 
+            // Validate Donor Phone
+            if (!AntiSpamValidator.IsValidPhone(model.DonorPhone, isRequired: true, out string cleanPhone, out string phoneErr))
+            {
+                ViewBag.Campaigns = _datalayer.GetCampaignsList();
+                ViewBag.Members = _datalayer.GetMembersList();
+                TempData["ErrorMessage"] = phoneErr;
+                return View(model);
+            }
+            model.DonorPhone = cleanPhone;
+
+            // Validate Donor Email if provided
+            if (!string.IsNullOrWhiteSpace(model.DonorEmail))
+            {
+                if (!AntiSpamValidator.IsValidEmail(model.DonorEmail, out string cleanEmail, out string emailErr))
+                {
+                    ViewBag.Campaigns = _datalayer.GetCampaignsList();
+                    ViewBag.Members = _datalayer.GetMembersList();
+                    TempData["ErrorMessage"] = emailErr;
+                    return View(model);
+                }
+                model.DonorEmail = cleanEmail;
+            }
+
             model.CreatedBy = HttpContext.Session.GetString("UserName") ?? "Admin";
 
             try

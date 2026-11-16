@@ -47,12 +47,14 @@
 
                                 <div class="col-md-6">
                                     <label class="form-label f-w-600">Mobile Number <span class="text-danger">*</span></label>
-                                    <input type="text" asp-for="Mobile" class="form-control" required placeholder="10-digit mobile number" />
+                                    <input type="text" asp-for="Mobile" id="adminMemberMobile" class="form-control" required placeholder="10-digit mobile number" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10); validateAdminMobile(this);" />
+                                    <div id="adminMobileFeedback" class="small mt-1" style="display:none;"></div>
                                     <span asp-validation-for="Mobile" class="text-danger"></span>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label f-w-600">Email Address</label>
-                                    <input type="email" asp-for="Email" class="form-control" placeholder="donor@example.com" />
+                                    <input type="email" asp-for="Email" id="adminMemberEmail" class="form-control" placeholder="donor@example.com" oninput="validateAdminEmail(this);" />
+                                    <div id="adminEmailFeedback" class="small mt-1" style="display:none;"></div>
                                     <span asp-validation-for="Email" class="text-danger"></span>
                                 </div>
 
@@ -238,6 +240,36 @@
                 opt.text = targetCity || "Other City";
                 opt.selected = true;
                 citySelect.appendChild(opt);
+            }
+        }
+
+        function validateAdminMobile(input) {
+            const feedback = document.getElementById('adminMobileFeedback');
+            if (!feedback) return;
+            const val = input.value;
+            if (val.length === 0) { feedback.style.display = 'none'; return; }
+            feedback.style.display = 'block';
+            if (val.length === 10 && /^[6-9]/.test(val)) {
+                feedback.className = 'small mt-1 text-success';
+                feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Valid 10-digit Mobile';
+            } else {
+                feedback.className = 'small mt-1 text-danger';
+                feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Must be 10 digits starting with 6, 7, 8, or 9';
+            }
+        }
+        function validateAdminEmail(input) {
+            const feedback = document.getElementById('adminEmailFeedback');
+            if (!feedback) return;
+            const val = input.value.trim().toLowerCase();
+            if (val.length === 0) { feedback.style.display = 'none'; return; }
+            feedback.style.display = 'block';
+            var res = window.SJTValidator ? window.SJTValidator.validateEmail(val) : { valid: false, message: 'Validating...' };
+            if (res.valid) {
+                feedback.className = 'small mt-1 text-success fw-bold';
+                feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> ' + res.message;
+            } else {
+                feedback.className = 'small mt-1 text-danger fw-bold';
+                feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> ' + res.message;
             }
         }
 

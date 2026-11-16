@@ -172,6 +172,19 @@
             document.getElementById('modalDonorPhone').focus();
             return;
         }
+        if (email && email.length > 0) {
+            var emailCheck = window.SJTValidator ? window.SJTValidator.validateEmail(email) : { valid: true };
+            if (!emailCheck.valid) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: emailCheck.isTypo ? 'गलत डोमेन (Domain Typo)' : 'Invalid Email',
+                    text: emailCheck.message,
+                    confirmButtonColor: '#e03e2d'
+                });
+                document.getElementById('modalDonorEmail').focus();
+                return;
+            }
+        }
         if (isNaN(amt) || amt <= 0) {
             Swal.fire({ icon: 'warning', title: 'Amount Required', text: 'Please enter a valid donation amount.', confirmButtonColor: '#e03e2d' });
             document.getElementById('modalAmountInput').focus();

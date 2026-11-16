@@ -658,46 +658,70 @@
                                 }
                                 function validateHomeEmail(input) {
                                     const feedback = document.getElementById('homeEmailFeedback');
+                                    const submitBtn = document.getElementById('btnSubmitHomeInquiry');
                                     if (!feedback) return;
                                     const val = input.value.trim().toLowerCase();
-                                    if (val.length === 0) { feedback.style.display = 'none'; return; }
-                                    feedback.style.display = 'block';
-                                    if (val.indexOf('~') !== -1) {
-                                        feedback.className = 'small mt-1 text-danger';
-                                        feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Invalid character in email';
+                                    if (val.length === 0) {
+                                        feedback.style.display = 'none';
+                                        input.classList.remove('is-valid', 'is-invalid');
+                                        if (submitBtn) submitBtn.disabled = false;
                                         return;
                                     }
-                                    if (/^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val)) {
-                                        feedback.className = 'small mt-1 text-success';
-                                        feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Valid Email Format';
+                                    feedback.style.display = 'block';
+                                    var res = window.SJTValidator ? window.SJTValidator.validateEmail(val) : { valid: false, message: 'Validating...' };
+                                    if (res.valid) {
+                                        input.classList.remove('is-invalid');
+                                        input.classList.add('is-valid');
+                                        feedback.className = 'small mt-1 text-success fw-bold';
+                                        feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> ' + res.message;
+                                        if (submitBtn) submitBtn.disabled = false;
                                     } else {
-                                        feedback.className = 'small mt-1 text-danger';
-                                        feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Invalid email format (e.g. name@example.com)';
+                                        input.classList.remove('is-valid');
+                                        input.classList.add('is-invalid');
+                                        feedback.className = 'small mt-1 text-danger fw-bold';
+                                        feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> ' + res.message;
+                                        if (submitBtn) submitBtn.disabled = true;
                                     }
                                 }
                                 document.getElementById('homeInquiryForm')?.addEventListener('submit', function(e) {
                                     const name = document.getElementById('ul-contact-name').value.trim();
-                                    if (name.length < 2 || /http|https|\.cc|\.com|\*|~/.test(name.toLowerCase())) {
+                                    const nameCheck = window.SJTValidator ? window.SJTValidator.validateName(name) : { valid: name.length >= 2, message: 'Invalid name' };
+                                    if (!nameCheck.valid) {
                                         e.preventDefault();
-                                        Swal.fire({ icon: 'warning', title: 'Invalid Name', text: 'Please enter a valid human name (letters only, no links or symbols).', confirmButtonColor: '#e02b20' });
+                                        Swal.fire({ icon: 'warning', title: 'Invalid Name', text: nameCheck.message, confirmButtonColor: '#e02b20' });
                                         return;
                                     }
                                     const email = document.getElementById('ul-contact-email').value.trim().toLowerCase();
-                                    if (email.indexOf('~') !== -1 || !/^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+                                    const emailCheck = window.SJTValidator ? window.SJTValidator.validateEmail(email) : { valid: false, message: 'Invalid email' };
+                                    if (!emailCheck.valid) {
                                         e.preventDefault();
-                                        Swal.fire({ icon: 'warning', title: 'Invalid Email Address', text: 'Please enter a valid email format (e.g. name@example.com). Disposable emails are not allowed.', confirmButtonColor: '#e02b20' });
+                                        Swal.fire({
+                                            icon: 'warning',
+                                            title: emailCheck.isTypo ? 'गलत डोमेन (Domain Typo)' : 'अमान्य ईमेल (Invalid Email)',
+                                            text: emailCheck.message,
+                                            confirmButtonColor: '#e02b20'
+                                        });
                                         return;
                                     }
                                     const phone = document.getElementById('ul-contact-phone').value.trim();
-                                    if (phone.length > 0 && !/^[6-9]\d{9}$/.test(phone)) {
+                                    const phoneCheck = window.SJTValidator ? window.SJTValidator.validateMobile(phone, false) : { valid: true };
+                                    if (!phoneCheck.valid) {
                                         e.preventDefault();
-                                        Swal.fire({ icon: 'warning', title: 'Invalid Mobile Number', text: 'Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.', confirmButtonColor: '#e02b20' });
+                                        Swal.fire({ icon: 'warning', title: 'Invalid Mobile Number', text: phoneCheck.message, confirmButtonColor: '#e02b20' });
+                                        return;
+                                    }
+                                    const sub = document.getElementById('ul-contact-subject')?.value.trim();
+                                    const subCheck = window.SJTValidator ? window.SJTValidator.validateSubject(sub) : { valid: true };
+                                    if (!subCheck.valid) {
+                                        e.preventDefault();
+                                        Swal.fire({ icon: 'warning', title: 'Invalid Subject', text: subCheck.message, confirmButtonColor: '#e02b20' });
                                         return;
                                     }
                                     const msg = document.getElementById('ul-contact-msg').value.trim();
-                                    if (msg.length < 8) {
+                                    const msgCheck = window.SJTValidator ? window.SJTValidator.validateMessage(msg) : { valid: msg.length >= 8 };
+                                    if (!msgCheck.valid) {
                                         e.preventDefault();
-                                        Swal.fire({ icon: 'warning', title: 'Message Too Short', text: 'Please write at least 8 characters describing your inquiry.', confirmButtonColor: '#e02b20' });
+                                        Swal.fire({ icon: 'warning', title: 'Message Error', text: msgCheck.message || 'Please write at least 8 characters describing your inquiry.', confirmButtonColor: '#e02b20' });
                                         return;
                                     }
                                 });

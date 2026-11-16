@@ -288,19 +288,24 @@
         function validateEmailRealtime(input) {
             const feedback = document.getElementById('emailFeedback');
             if (!feedback) return;
-            const val = input.value.trim();
+            const val = input.value.trim().toLowerCase();
             if (val.length === 0) {
                 feedback.style.display = 'none';
+                input.classList.remove('is-valid', 'is-invalid');
                 return;
             }
             feedback.style.display = 'block';
-            const emailRegex = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
-            if (emailRegex.test(val)) {
-                feedback.className = 'small mt-1 text-success';
-                feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Valid Email Address';
+            var res = window.SJTValidator ? window.SJTValidator.validateEmail(val) : { valid: false, message: 'Validating...' };
+            if (res.valid) {
+                input.classList.remove('is-invalid');
+                input.classList.add('is-valid');
+                feedback.className = 'small mt-1 text-success fw-bold';
+                feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> ' + res.message;
             } else {
-                feedback.className = 'small mt-1 text-danger';
-                feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Please enter a valid email format (e.g. name@domain.com)';
+                input.classList.remove('is-valid');
+                input.classList.add('is-invalid');
+                feedback.className = 'small mt-1 text-danger fw-bold';
+                feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> ' + res.message;
             }
         }
 
@@ -376,16 +381,19 @@
                 return;
             }
 
-            const email = document.getElementById('regEmail').value.trim();
-            if (email.length > 0 && !/^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(email)) {
-                e.preventDefault();
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Invalid Email Address',
-                    text: 'Please enter a valid email address (e.g. name@domain.com).',
-                    confirmButtonColor: '#e02b20'
-                });
-                return;
+            const email = document.getElementById('regEmail').value.trim().toLowerCase();
+            if (email.length > 0) {
+                var emailCheck = window.SJTValidator ? window.SJTValidator.validateEmail(email) : { valid: true };
+                if (!emailCheck.valid) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: emailCheck.isTypo ? 'गलत डोमेन (Domain Typo)' : 'Invalid Email Address',
+                        text: emailCheck.message || 'Please enter a valid email address.',
+                        confirmButtonColor: '#e02b20'
+                    });
+                    return;
+                }
             }
 
             const pass = document.getElementById('regPassword').value;

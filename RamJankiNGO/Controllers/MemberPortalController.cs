@@ -144,6 +144,34 @@ namespace RamJankiNGO.Controllers
                 return View(model);
             }
 
+            // 1. Full name validation (checks letters, spaces, prevents special chars and spam)
+            if (!AntiSpamValidator.IsValidName(model.FullName, out string cleanName, out string nameErr))
+            {
+                ViewBag.ErrorMessage = nameErr;
+                return View(model);
+            }
+
+            // 2. Mobile validation (10-digit Indian mobile number)
+            if (!AntiSpamValidator.IsValidPhone(model.Mobile, isRequired: true, out string cleanMobile, out string phoneErr))
+            {
+                ViewBag.ErrorMessage = phoneErr;
+                return View(model);
+            }
+
+            // 3. Email validation (catches typos like gmil.com, gail.com, disposable domains)
+            if (!string.IsNullOrWhiteSpace(model.Email))
+            {
+                if (!AntiSpamValidator.IsValidEmail(model.Email, out string cleanEmail, out string emailErr))
+                {
+                    ViewBag.ErrorMessage = emailErr;
+                    return View(model);
+                }
+                model.Email = cleanEmail;
+            }
+
+            model.FullName = cleanName;
+            model.Mobile = cleanMobile;
+
             if (!System.Text.RegularExpressions.Regex.IsMatch(model.Password, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+\-=\[\]{}|;:,.<>\/]).{8,50}$"))
             {
                 ViewBag.ErrorMessage = "Password must be at least 8 characters long and include at least one uppercase letter (A-Z), one lowercase letter (a-z), one numeric digit (0-9), and one special character (e.g. @, #, $, !).";
@@ -187,7 +215,13 @@ namespace RamJankiNGO.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            string email = model.Email.Trim();
+            if (!AntiSpamValidator.IsValidEmail(model.Email, out string cleanEmail, out string emailErr))
+            {
+                ViewBag.ErrorMessage = emailErr;
+                return View(model);
+            }
+
+            string email = cleanEmail;
             DataTable dt = _datalayer.GetUserByUsername(email);
             if (dt == null || dt.Rows.Count == 0)
             {

@@ -375,23 +375,24 @@
     function validateDonationEmail(input) {
         const feedback = document.getElementById('donorEmailFeedback');
         if (!feedback) return;
-        const val = input.value.trim();
+        const val = input.value.trim().toLowerCase();
         if (val.length === 0) {
             feedback.style.display = 'none';
             input.classList.remove('is-valid', 'is-invalid');
             return;
         }
         feedback.style.display = 'block';
-        if (/^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val)) {
+        var res = window.SJTValidator ? window.SJTValidator.validateEmail(val) : { valid: false, message: 'Validating...' };
+        if (res.valid) {
             input.classList.remove('is-invalid');
             input.classList.add('is-valid');
-            feedback.className = 'small mt-1 text-success';
-            feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Valid Email (80G receipt will be sent here)';
+            feedback.className = 'small mt-1 text-success fw-bold';
+            feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> ' + res.message + ' (80G receipt will be sent here)';
         } else {
             input.classList.remove('is-valid');
             input.classList.add('is-invalid');
-            feedback.className = 'small mt-1 text-danger';
-            feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Invalid email format (e.g. name@domain.com)';
+            feedback.className = 'small mt-1 text-danger fw-bold';
+            feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> ' + res.message;
         }
     }
 
@@ -457,17 +458,20 @@
             return;
         }
 
-        if (email.length > 0 && !/^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
-            emailInput.classList.add('is-invalid');
-            validateDonationEmail(emailInput);
-            Swal.fire({
-                icon: 'warning',
-                title: 'Invalid Email Address',
-                text: 'Please enter a valid email address (e.g. donor@example.com) to receive your 80G tax receipt.',
-                confirmButtonColor: '#e03e2d'
-            });
-            emailInput.focus();
-            return;
+        if (email.length > 0) {
+            var emailCheck = window.SJTValidator ? window.SJTValidator.validateEmail(email) : { valid: /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(email) };
+            if (!emailCheck.valid) {
+                emailInput.classList.add('is-invalid');
+                validateDonationEmail(emailInput);
+                Swal.fire({
+                    icon: 'warning',
+                    title: emailCheck.isTypo ? 'गलत डोमेन (Domain Typo)' : 'Invalid Email Address',
+                    text: emailCheck.message || 'Please enter a valid email address to receive your 80G tax receipt.',
+                    confirmButtonColor: '#e03e2d'
+                });
+                emailInput.focus();
+                return;
+            }
         }
 
         if (pan.length > 0 && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan)) {

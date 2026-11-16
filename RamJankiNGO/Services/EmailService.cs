@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
@@ -43,6 +45,9 @@ namespace RamJankiNGO.Services
                 string password = _config["EmailSettings:Password"] ?? "cepapxczfdelcrgw";
                 bool enableSsl = Convert.ToBoolean(_config["EmailSettings:EnableSsl"] ?? "true");
 
+                // Strictly strip any square brackets from email subject line
+                string cleanSubject = (subject ?? "").Replace("[", "").Replace("]", "").Trim();
+
                 using (var client = new SmtpClient(smtpServer, port))
                 {
                     client.EnableSsl = enableSsl;
@@ -54,9 +59,35 @@ namespace RamJankiNGO.Services
                     {
                         mail.From = new MailAddress(senderEmail, senderName);
                         mail.To.Add(toEmail);
-                        mail.Subject = subject;
-                        mail.Body = htmlBody;
-                        mail.IsBodyHtml = true;
+                        mail.Subject = cleanSubject;
+
+                        // Locate email logo for inline CID embedding
+                        string[] candidatePaths = new[]
+                        {
+                            Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "assets", "img", "email-logo.png"),
+                            Path.Combine(AppContext.BaseDirectory, "wwwroot", "assets", "img", "email-logo.png"),
+                            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "wwwroot", "assets", "img", "email-logo.png"),
+                            Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "assets", "img", "logo.png"),
+                            Path.Combine(AppContext.BaseDirectory, "wwwroot", "assets", "img", "logo.png")
+                        };
+                        string logoPath = candidatePaths.FirstOrDefault(p => !string.IsNullOrEmpty(p) && File.Exists(p)) ?? "";
+
+                        if (!string.IsNullOrEmpty(logoPath) && htmlBody.Contains("cid:trustlogo"))
+                        {
+                            var av = AlternateView.CreateAlternateViewFromString(htmlBody, null, "text/html");
+                            var lr = new LinkedResource(logoPath, "image/png")
+                            {
+                                ContentId = "trustlogo",
+                                TransferEncoding = System.Net.Mime.TransferEncoding.Base64
+                            };
+                            av.LinkedResources.Add(lr);
+                            mail.AlternateViews.Add(av);
+                        }
+                        else
+                        {
+                            mail.Body = htmlBody;
+                            mail.IsBodyHtml = true;
+                        }
 
                         await client.SendMailAsync(mail);
                         _logger.LogInformation($"Email sent successfully to {toEmail}");
@@ -91,28 +122,61 @@ namespace RamJankiNGO.Services
 
         public async Task SendMemberWelcomeEmailAsync(string memberEmail, string memberName, string memberCode, string loginUrl)
         {
-            string subject = $"Welcome to Shriram Janki Trust - Your Member ID: {memberCode}";
+            string safeMemberName = AntiSpamValidator.SanitizeSubject(memberName);
+            string subject = $"Welcome to Shriram Janki Trust - Member ID {memberCode}";
+            string encodedName = WebUtility.HtmlEncode(memberName ?? "");
+            string encodedCode = WebUtility.HtmlEncode(memberCode ?? "");
+            string encodedEmail = WebUtility.HtmlEncode(memberEmail ?? "");
+
             string body = $@"
-            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;'>
-                <div style='background-color: #ea5455; color: white; padding: 25px; text-align: center;'>
-                    <h2 style='margin: 0;'>Shriram Janki Trust</h2>
-                    <p style='margin: 5px 0 0;'>Member Registration Confirmation</p>
-                </div>
-                <div style='padding: 25px;'>
-                    <p>Dear <strong>{memberName}</strong>,</p>
-                    <p>Namaste and welcome! You have been successfully registered as a member with Shriram Janki Trust.</p>
-                    <div style='background-color: #f8f9fa; border-left: 4px solid #ea5455; padding: 15px; margin: 20px 0;'>
-                        <p style='margin: 0;'><strong>Member ID:</strong> <span style='font-size: 16px; color: #ea5455;'>{memberCode}</span></p>
-                        <p style='margin: 5px 0 0;'><strong>Registered Email:</strong> {memberEmail}</p>
-                        <p style='margin: 5px 0 0;'><strong>Default Password:</strong> <code>member123</code> (Change upon first login)</p>
-                    </div>
-                    <p>You can now access your Member Portal to view your seva donation history and download official tax receipts:</p>
-                    <div style='text-align: center; margin: 25px 0;'>
-                        <a href='{loginUrl}' style='background-color: #ea5455; color: white; padding: 12px 25px; text-decoration: none; border-radius: 4px; font-weight: bold;'>Login to Member Portal</a>
-                    </div>
-                    <p style='color: #666; font-size: 12px;'>Thank you for your devotion and partnership in social seva.<br/>Shriram Janki Trust, Ayodhya, UP</p>
-                </div>
-            </div>";
+<!DOCTYPE html>
+<html lang='en'>
+<head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'></head>
+<body style='margin:0; padding:20px 0; background-color:#f4f6f9; font-family:""Segoe UI"", Tahoma, Geneva, Verdana, sans-serif;'>
+  <div style='max-width:620px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.08); border:1px solid #ffd8a8;'>
+    
+    <!-- Top Branded Header with Logo -->
+    <div style='background:linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%); padding:28px 24px; text-align:center; color:#ffffff;'>
+      <div style='margin-bottom:12px;'>
+        <img src='cid:trustlogo' alt='Shriram Janki Trust Logo' width='70' height='70' style='display:inline-block; width:70px; height:70px; border-radius:50%; background-color:#ffffff; padding:4px; box-shadow:0 4px 12px rgba(0,0,0,0.25); border:2px solid #ffd8a8; vertical-align:middle;' />
+      </div>
+      <div style='font-size:22px; font-weight:700; letter-spacing:0.5px; margin-bottom:4px;'>श्रीराम जानकी मंदिर सेवा ट्रस्ट</div>
+      <div style='font-size:12px; text-transform:uppercase; letter-spacing:1.5px; opacity:0.95; margin-bottom:14px;'>SHRI RAM JANKI MANDIR SEWA TRUST &bull; AYODHYA DHAM, UP</div>
+      <div style='display:inline-block; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); padding:6px 20px; border-radius:20px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px;'>
+        &#127881; Member Registration Confirmation
+      </div>
+    </div>
+
+    <!-- Body Container -->
+    <div style='padding:28px 24px;'>
+      <p style='font-size:15px; color:#2d3748;'>Dear <strong>{encodedName}</strong>,</p>
+      <p style='font-size:14px; color:#4a5568; line-height:1.6;'>Namaste and welcome! You have been successfully registered as a member with <strong>Shriram Janki Mandir Sewa Trust</strong>. Your devotion and partnership strengthen our humanitarian and spiritual missions.</p>
+      
+      <div style='background:#f8f9fa; border-left:4px solid #d32f2f; border-radius:0 8px 8px 0; padding:18px; margin:22px 0;'>
+        <div style='font-size:14px; margin-bottom:8px;'><strong>Member ID:</strong> <span style='font-size:16px; color:#d32f2f; font-weight:bold;'>{encodedCode}</span></div>
+        <div style='font-size:14px; margin-bottom:8px;'><strong>Registered Email:</strong> {encodedEmail}</div>
+        <div style='font-size:14px;'><strong>Default Password:</strong> <code style='background:#fff; padding:2px 8px; border:1px solid #ddd; border-radius:4px;'>member123</code> <span style='color:#718096; font-size:12px;'>(Change upon first login)</span></div>
+      </div>
+
+      <p style='font-size:14px; color:#4a5568;'>You can now access your Member Portal to view your seva donation history and download official 80G tax receipts:</p>
+      
+      <div style='text-align:center; margin:26px 0 16px;'>
+        <a href='{loginUrl}' style='display:inline-block; background:linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%); color:#ffffff; font-size:14px; font-weight:700; text-decoration:none; padding:12px 28px; border-radius:6px; box-shadow:0 3px 10px rgba(211,47,47,0.3);'>Login to Member Portal</a>
+      </div>
+    </div>
+
+    <!-- Trust Footer -->
+    <div style='background:#fafafa; border-top:1px solid #edf2f7; padding:18px 24px; text-align:center; font-size:12px; color:#718096; line-height:1.6;'>
+      <div style='font-weight:600; color:#4a5568; margin-bottom:3px;'>श्रीराम जानकी मंदिर सेवा ट्रस्ट (SHRI RAM JANKI MANDIR SEWA TRUST)</div>
+      <div>करनपुर, स्टेशन रोड, बभनान - गोण्डा, उ.प्र., भारत - 271313 (निकट राम मंदिर, अयोध्या धाम) &bull; Phone: +91 9918953452, +91 9250931408</div>
+      <div style='margin-top:5px; font-size:11px; color:#a0aec0;'>
+        Darpan ID: UP/2026/0956133 &bull; Reg: 15/B4/G20/2025 &bull; 80G &amp; 12A Registered
+      </div>
+    </div>
+
+  </div>
+ </body>
+</html>";
 
             if (!string.IsNullOrWhiteSpace(memberEmail))
             {
@@ -121,34 +185,69 @@ namespace RamJankiNGO.Services
 
             // Also alert admin
             string adminEmails = _config["EmailSettings:AdminNotificationEmails"] ?? "";
-            string adminSubject = $"[Admin Alert] New Member Registered: {memberName} ({memberCode})";
+            string adminSubject = $"Admin Alert: New Member Registered - {safeMemberName} ({memberCode})";
             await SendToMultipleAsync(adminEmails, adminSubject, body);
         }
 
         public async Task SendDonationReceiptEmailAsync(string donorEmail, string donorName, string receiptNumber, decimal amount, string campaignTitle, string receiptUrl)
         {
+            string safeDonorName = AntiSpamValidator.SanitizeSubject(donorName);
             string subject = $"Thank You for Your Donation - Receipt #{receiptNumber} | Shriram Janki Trust";
+            string encodedDonor = WebUtility.HtmlEncode(donorName ?? "");
+            string encodedCause = WebUtility.HtmlEncode(campaignTitle ?? "");
+            string istTime = DateTime.UtcNow.AddMinutes(330).ToString("dd MMM yyyy, hh:mm tt") + " IST";
+
             string body = $@"
-            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;'>
-                <div style='background-color: #ea5455; color: white; padding: 25px; text-align: center;'>
-                    <h2 style='margin: 0;'>Shriram Janki Trust</h2>
-                    <p style='margin: 5px 0 0;'>Official Donation Receipt</p>
-                </div>
-                <div style='padding: 25px;'>
-                    <p>Dear <strong>{donorName}</strong>,</p>
-                    <p>Thank you deeply for your generous contribution of <strong>₹{amount:N2}</strong> towards <strong>{campaignTitle}</strong>. Your seva supports healthcare, education, and food relief for underprivileged families.</p>
-                    <div style='background-color: #f8f9fa; border: 1px dashed #ea5455; border-radius: 6px; padding: 15px; margin: 20px 0;'>
-                        <p style='margin: 0;'><strong>Receipt Number:</strong> {receiptNumber}</p>
-                        <p style='margin: 5px 0 0;'><strong>Amount Contributed:</strong> ₹{amount:N2}</p>
-                        <p style='margin: 5px 0 0;'><strong>Cause:</strong> {campaignTitle}</p>
-                        <p style='margin: 5px 0 0;'><strong>Status:</strong> <span style='color: green; font-weight: bold;'>Confirmed Successful</span></p>
-                    </div>
-                    <div style='text-align: center; margin: 25px 0;'>
-                        <a href='{receiptUrl}' style='background-color: #ea5455; color: white; padding: 12px 25px; text-decoration: none; border-radius: 4px; font-weight: bold;'>View & Download Official Receipt PDF</a>
-                    </div>
-                    <p style='color: #666; font-size: 12px;'>Shriram Janki Trust is deeply grateful for your support.<br/>May your seva bring peace, prosperity, and blessings.</p>
-                </div>
-            </div>";
+<!DOCTYPE html>
+<html lang='en'>
+<head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'></head>
+<body style='margin:0; padding:20px 0; background-color:#f4f6f9; font-family:""Segoe UI"", Tahoma, Geneva, Verdana, sans-serif;'>
+  <div style='max-width:620px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.08); border:1px solid #ffd8a8;'>
+    
+    <!-- Top Branded Header with Logo -->
+    <div style='background:linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); padding:28px 24px; text-align:center; color:#ffffff;'>
+      <div style='margin-bottom:12px;'>
+        <img src='cid:trustlogo' alt='Shriram Janki Trust Logo' width='70' height='70' style='display:inline-block; width:70px; height:70px; border-radius:50%; background-color:#ffffff; padding:4px; box-shadow:0 4px 12px rgba(0,0,0,0.25); border:2px solid #ffd8a8; vertical-align:middle;' />
+      </div>
+      <div style='font-size:22px; font-weight:700; letter-spacing:0.5px; margin-bottom:4px;'>श्रीराम जानकी मंदिर सेवा ट्रस्ट</div>
+      <div style='font-size:12px; text-transform:uppercase; letter-spacing:1.5px; opacity:0.95; margin-bottom:14px;'>SHRI RAM JANKI MANDIR SEWA TRUST &bull; AYODHYA DHAM, UP</div>
+      <div style='display:inline-block; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); padding:6px 20px; border-radius:20px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px;'>
+        &#128176; Official Donation Receipt
+      </div>
+    </div>
+
+    <!-- Body Container -->
+    <div style='padding:28px 24px;'>
+      <p style='font-size:15px; color:#2d3748;'>Dear <strong>{encodedDonor}</strong>,</p>
+      <p style='font-size:14px; color:#4a5568; line-height:1.6;'>Thank you deeply for your generous contribution of <strong>₹{amount:N2}</strong> towards <strong>{encodedCause}</strong>. Your seva supports healthcare, education, annakshetra, and gaushala development for the needy.</p>
+      
+      <!-- Receipt Box -->
+      <div style='background:#f1f8e9; border:2px dashed #4caf50; border-radius:8px; padding:20px; margin:22px 0; text-align:center;'>
+        <div style='font-size:12px; color:#558b2f; font-weight:700; text-transform:uppercase; letter-spacing:1px;'>AMOUNT CONTRIBUTED</div>
+        <div style='font-size:32px; font-weight:800; color:#2e7d32; margin:6px 0;'>₹{amount:N2}</div>
+        <div style='font-size:13px; color:#33691e;'>Receipt Number: <strong>{receiptNumber}</strong> &bull; Date: {istTime}</div>
+        <div style='margin-top:8px;'><span style='display:inline-block; background:#4caf50; color:#fff; font-size:11px; font-weight:700; padding:3px 12px; border-radius:12px;'>PAYMENT CONFIRMED</span></div>
+      </div>
+
+      <div style='text-align:center; margin:26px 0 16px;'>
+        <a href='{receiptUrl}' style='display:inline-block; background:linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); color:#ffffff; font-size:14px; font-weight:700; text-decoration:none; padding:12px 28px; border-radius:6px; box-shadow:0 3px 10px rgba(46,125,50,0.3);'>View &amp; Download Official Receipt PDF</a>
+      </div>
+      
+      <p style='color:#718096; font-size:12px; text-align:center;'>Donations are eligible for tax deduction under Section 80G of the Income Tax Act.</p>
+    </div>
+
+    <!-- Trust Footer -->
+    <div style='background:#fafafa; border-top:1px solid #edf2f7; padding:18px 24px; text-align:center; font-size:12px; color:#718096; line-height:1.6;'>
+      <div style='font-weight:600; color:#4a5568; margin-bottom:3px;'>श्रीराम जानकी मंदिर सेवा ट्रस्ट (SHRI RAM JANKI MANDIR SEWA TRUST)</div>
+      <div>करनपुर, स्टेशन रोड, बभनान - गोण्डा, उ.प्र., भारत - 271313 (निकट राम मंदिर, अयोध्या धाम) &bull; Phone: +91 9918953452, +91 9250931408</div>
+      <div style='margin-top:5px; font-size:11px; color:#a0aec0;'>
+        Darpan ID: UP/2026/0956133 &bull; Reg: 15/B4/G20/2025 &bull; 80G &amp; 12A Registered
+      </div>
+    </div>
+
+  </div>
+ </body>
+</html>";
 
             if (!string.IsNullOrWhiteSpace(donorEmail))
             {
@@ -160,40 +259,53 @@ namespace RamJankiNGO.Services
         {
             string adminEmails = _config["EmailSettings:AdminNotificationEmails"] ?? "";
             string safeDonorName = AntiSpamValidator.SanitizeSubject(donorName);
-            string subject = $"[Donation Confirmed] ₹{amount:N0} from {safeDonorName} - Receipt #{receiptNumber}";
+            string subject = $"Donation Confirmed: ₹{amount:N0} from {safeDonorName} - Receipt #{receiptNumber}";
             string istTime = DateTime.UtcNow.AddMinutes(330).ToString("dd MMM yyyy, hh:mm tt") + " IST";
 
             string body = $@"
 <!DOCTYPE html>
-<html>
+<html lang='en'>
 <head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'></head>
 <body style='margin:0; padding:20px 0; background-color:#f4f6f9; font-family:""Segoe UI"", Tahoma, Geneva, Verdana, sans-serif;'>
-  <div style='max-width:600px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.08); border:1px solid #ffd8a8;'>
-    <div style='background:linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); padding:22px; text-align:center; color:#ffffff;'>
-      <div style='font-size:18px; font-weight:700;'>श्रीराम जानकी मंदिर सेवा ट्रस्ट</div>
-      <div style='font-size:12px; letter-spacing:1px; opacity:0.95;'>SHRI RAM JANKI MANDIR SEWA TRUST &bull; AYODHYA DHAM</div>
-      <div style='margin-top:10px; display:inline-block; background:rgba(255,255,255,0.2); padding:4px 14px; border-radius:16px; font-size:12px; font-weight:600;'>
+  <div style='max-width:620px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.08); border:1px solid #ffd8a8;'>
+    
+    <!-- Top Branded Header with Logo -->
+    <div style='background:linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); padding:28px 24px; text-align:center; color:#ffffff;'>
+      <div style='margin-bottom:12px;'>
+        <img src='cid:trustlogo' alt='Shriram Janki Trust Logo' width='70' height='70' style='display:inline-block; width:70px; height:70px; border-radius:50%; background-color:#ffffff; padding:4px; box-shadow:0 4px 12px rgba(0,0,0,0.25); border:2px solid #ffd8a8; vertical-align:middle;' />
+      </div>
+      <div style='font-size:22px; font-weight:700; letter-spacing:0.5px; margin-bottom:4px;'>श्रीराम जानकी मंदिर सेवा ट्रस्ट</div>
+      <div style='font-size:12px; text-transform:uppercase; letter-spacing:1.5px; opacity:0.95; margin-bottom:14px;'>SHRI RAM JANKI MANDIR SEWA TRUST &bull; AYODHYA DHAM, UP</div>
+      <div style='display:inline-block; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); padding:6px 20px; border-radius:20px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px;'>
         &#128176; Online Donation Confirmed
       </div>
     </div>
-    <div style='padding:24px;'>
-      <div style='background:#f1f8e9; border:1px dashed #4caf50; border-radius:8px; padding:16px; margin-bottom:20px; text-align:center;'>
-        <div style='font-size:13px; color:#558b2f; font-weight:600;'>AMOUNT RECEIVED</div>
-        <div style='font-size:28px; font-weight:800; color:#2e7d32; margin:4px 0;'>₹{amount:N2}</div>
+
+    <div style='padding:28px 24px;'>
+      <div style='background:#f1f8e9; border:2px dashed #4caf50; border-radius:8px; padding:18px; margin-bottom:22px; text-align:center;'>
+        <div style='font-size:12px; color:#558b2f; font-weight:700; text-transform:uppercase;'>AMOUNT RECEIVED</div>
+        <div style='font-size:30px; font-weight:800; color:#2e7d32; margin:4px 0;'>₹{amount:N2}</div>
         <div style='font-size:12px; color:#689f38;'>Receipt Number: <strong>{receiptNumber}</strong></div>
       </div>
       <table style='width:100%; border-collapse:collapse; margin-bottom:15px; font-size:14px;'>
-        <tr><td style='padding:8px; color:#666; width:35%;'>Donor:</td><td style='padding:8px; font-weight:bold; color:#222;'>{WebUtility.HtmlEncode(donorName)}</td></tr>
-        <tr><td style='padding:8px; color:#666;'>Mobile:</td><td style='padding:8px; color:#222;'>{WebUtility.HtmlEncode(donorPhone)}</td></tr>
-        <tr><td style='padding:8px; color:#666;'>Cause:</td><td style='padding:8px; color:#2e7d32; font-weight:600;'>{WebUtility.HtmlEncode(campaignTitle)}</td></tr>
-        <tr><td style='padding:8px; color:#666;'>Time:</td><td style='padding:8px; color:#555;'>{istTime}</td></tr>
+        <tr><td style='padding:10px; color:#718096; width:35%; border-bottom:1px solid #edf2f7;'>Donor:</td><td style='padding:10px; font-weight:bold; color:#1a202c; border-bottom:1px solid #edf2f7;'>{WebUtility.HtmlEncode(donorName)}</td></tr>
+        <tr><td style='padding:10px; color:#718096; border-bottom:1px solid #edf2f7;'>Mobile:</td><td style='padding:10px; color:#1a202c; border-bottom:1px solid #edf2f7;'>{WebUtility.HtmlEncode(donorPhone)}</td></tr>
+        <tr><td style='padding:10px; color:#718096; border-bottom:1px solid #edf2f7;'>Cause:</td><td style='padding:10px; color:#2e7d32; font-weight:600; border-bottom:1px solid #edf2f7;'>{WebUtility.HtmlEncode(campaignTitle)}</td></tr>
+        <tr><td style='padding:10px; color:#718096;'>Time:</td><td style='padding:10px; color:#4a5568;'>{istTime}</td></tr>
       </table>
     </div>
-    <div style='background:#fafafa; border-top:1px solid #eee; padding:14px; text-align:center; font-size:11px; color:#888;'>
-      श्रीराम जानकी मंदिर सेवा ट्रस्ट &bull; Ayodhya Dham, UP &bull; Helpline: +91 9918953452
+
+    <!-- Trust Footer -->
+    <div style='background:#fafafa; border-top:1px solid #edf2f7; padding:18px 24px; text-align:center; font-size:12px; color:#718096; line-height:1.6;'>
+      <div style='font-weight:600; color:#4a5568; margin-bottom:3px;'>श्रीराम जानकी मंदिर सेवा ट्रस्ट (SHRI RAM JANKI MANDIR SEWA TRUST)</div>
+      <div>करनपुर, स्टेशन रोड, बभनान - गोण्डा, उ.प्र., भारत - 271313 (निकट राम मंदिर, अयोध्या धाम) &bull; Phone: +91 9918953452, +91 9250931408</div>
+      <div style='margin-top:5px; font-size:11px; color:#a0aec0;'>
+        Darpan ID: UP/2026/0956133 &bull; Reg: 15/B4/G20/2025 &bull; 80G &amp; 12A Registered
+      </div>
     </div>
+
   </div>
-</body>
+ </body>
 </html>";
 
             await SendToMultipleAsync(adminEmails, subject, body);
@@ -208,7 +320,8 @@ namespace RamJankiNGO.Services
             if (string.IsNullOrWhiteSpace(safeName)) safeName = "Website Visitor";
             if (safeName.Length > 40) safeName = safeName.Substring(0, 40);
 
-            string emailSubject = $"[New Inquiry] Shriram Janki Trust - {safeName}";
+            // Clean subject without brackets
+            string emailSubject = $"New Inquiry: Shriram Janki Trust - {safeName}";
 
             // Encoded safe values for HTML template
             string encodedName = WebUtility.HtmlEncode(name ?? "");
@@ -238,11 +351,14 @@ namespace RamJankiNGO.Services
 <body style='margin:0; padding:20px 0; background-color:#f4f6f9; font-family:""Segoe UI"", Tahoma, Geneva, Verdana, sans-serif; -webkit-font-smoothing:antialiased;'>
   <div style='max-width:620px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.08); border:1px solid #ffd8a8;'>
     
-    <!-- Top Branded Header -->
-    <div style='background:linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%); padding:26px 24px; text-align:center; color:#ffffff;'>
-      <div style='font-size:20px; font-weight:700; letter-spacing:0.5px; margin-bottom:4px;'>श्रीराम जानकी मंदिर सेवा ट्रस्ट</div>
-      <div style='font-size:12px; text-transform:uppercase; letter-spacing:1.5px; opacity:0.95; margin-bottom:12px;'>SHRI RAM JANKI MANDIR SEWA TRUST &bull; AYODHYA DHAM, UP</div>
-      <div style='display:inline-block; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); padding:5px 16px; border-radius:20px; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px;'>
+    <!-- Top Branded Header with Logo -->
+    <div style='background:linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%); padding:28px 24px; text-align:center; color:#ffffff;'>
+      <div style='margin-bottom:12px;'>
+        <img src='cid:trustlogo' alt='Shriram Janki Trust Logo' width='70' height='70' style='display:inline-block; width:70px; height:70px; border-radius:50%; background-color:#ffffff; padding:4px; box-shadow:0 4px 12px rgba(0,0,0,0.25); border:2px solid #ffd8a8; vertical-align:middle;' />
+      </div>
+      <div style='font-size:22px; font-weight:700; letter-spacing:0.5px; margin-bottom:4px; text-shadow:0 1px 2px rgba(0,0,0,0.2);'>श्रीराम जानकी मंदिर सेवा ट्रस्ट</div>
+      <div style='font-size:12px; text-transform:uppercase; letter-spacing:1.5px; opacity:0.95; margin-bottom:14px;'>SHRI RAM JANKI MANDIR SEWA TRUST &bull; AYODHYA DHAM, UP</div>
+      <div style='display:inline-block; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); padding:6px 20px; border-radius:20px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px;'>
         &#128233; New Public Inquiry Alert
       </div>
     </div>
@@ -343,7 +459,8 @@ namespace RamJankiNGO.Services
             if (string.IsNullOrWhiteSpace(safeName)) safeName = "Volunteer Applicant";
             if (safeName.Length > 40) safeName = safeName.Substring(0, 40);
 
-            string emailSubject = $"[Volunteer Application] Shriram Janki Trust - {safeName}";
+            // Clean subject without brackets
+            string emailSubject = $"Volunteer Application: Shriram Janki Trust - {safeName}";
 
             string encodedName = WebUtility.HtmlEncode(name ?? "");
             string encodedEmail = WebUtility.HtmlEncode(email ?? "");
@@ -354,34 +471,50 @@ namespace RamJankiNGO.Services
 
             string body = $@"
 <!DOCTYPE html>
-<html>
+<html lang='en'>
 <head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'></head>
 <body style='margin:0; padding:20px 0; background-color:#f4f6f9; font-family:""Segoe UI"", Tahoma, Geneva, Verdana, sans-serif;'>
-  <div style='max-width:600px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.08); border:1px solid #ffd8a8;'>
-    <div style='background:linear-gradient(135deg, #e65100 0%, #f57c00 100%); padding:22px; text-align:center; color:#ffffff;'>
-      <div style='font-size:18px; font-weight:700;'>श्रीराम जानकी मंदिर सेवा ट्रस्ट</div>
-      <div style='font-size:12px; letter-spacing:1px; opacity:0.95;'>SHRI RAM JANKI MANDIR SEWA TRUST &bull; AYODHYA DHAM</div>
-      <div style='margin-top:10px; display:inline-block; background:rgba(255,255,255,0.2); padding:4px 14px; border-radius:16px; font-size:12px; font-weight:600;'>
+  <div style='max-width:620px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.08); border:1px solid #ffd8a8;'>
+    
+    <!-- Top Branded Header with Logo -->
+    <div style='background:linear-gradient(135deg, #e65100 0%, #f57c00 100%); padding:28px 24px; text-align:center; color:#ffffff;'>
+      <div style='margin-bottom:12px;'>
+        <img src='cid:trustlogo' alt='Shriram Janki Trust Logo' width='70' height='70' style='display:inline-block; width:70px; height:70px; border-radius:50%; background-color:#ffffff; padding:4px; box-shadow:0 4px 12px rgba(0,0,0,0.25); border:2px solid #ffd8a8; vertical-align:middle;' />
+      </div>
+      <div style='font-size:22px; font-weight:700; letter-spacing:0.5px; margin-bottom:4px;'>श्रीराम जानकी मंदिर सेवा ट्रस्ट</div>
+      <div style='font-size:12px; text-transform:uppercase; letter-spacing:1.5px; opacity:0.95; margin-bottom:14px;'>SHRI RAM JANKI MANDIR SEWA TRUST &bull; AYODHYA DHAM, UP</div>
+      <div style='display:inline-block; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); padding:6px 20px; border-radius:20px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px;'>
         &#129309; New Volunteer Application
       </div>
     </div>
-    <div style='padding:24px;'>
-      <table style='width:100%; border-collapse:collapse; margin-bottom:15px; font-size:14px;'>
-        <tr><td style='padding:8px; color:#666; width:35%;'>Applicant Name:</td><td style='padding:8px; font-weight:bold; color:#222;'>{encodedName}</td></tr>
-        <tr><td style='padding:8px; color:#666;'>Email:</td><td style='padding:8px; color:#2b6cb0;'><a href='mailto:{encodedEmail}' style='color:#2b6cb0; text-decoration:none;'>{encodedEmail}</a></td></tr>
-        <tr><td style='padding:8px; color:#666;'>Phone:</td><td style='padding:8px; color:#222;'><a href='tel:{cleanPhone}' style='color:#e65100; text-decoration:none; font-weight:bold;'>+91 {cleanPhone}</a></td></tr>
-        <tr><td style='padding:8px; color:#666;'>Area of Seva:</td><td style='padding:8px; color:#e65100; font-weight:600;'>{encodedInterest}</td></tr>
-        <tr><td style='padding:8px; color:#666;'>Received At:</td><td style='padding:8px; color:#555;'>{istTime}</td></tr>
+
+    <div style='padding:28px 24px;'>
+      <p style='font-size:15px; color:#2d3748; margin-top:0;'>A dedicated devotee has submitted a volunteer seva application:</p>
+      
+      <table style='width:100%; border-collapse:collapse; margin-bottom:20px; font-size:14px;'>
+        <tr><td style='padding:10px; color:#718096; width:35%; border-bottom:1px solid #edf2f7;'>Applicant Name:</td><td style='padding:10px; font-weight:bold; color:#1a202c; border-bottom:1px solid #edf2f7;'>{encodedName}</td></tr>
+        <tr><td style='padding:10px; color:#718096; border-bottom:1px solid #edf2f7;'>Email:</td><td style='padding:10px; color:#2b6cb0; border-bottom:1px solid #edf2f7;'><a href='mailto:{encodedEmail}' style='color:#2b6cb0; text-decoration:none;'>{encodedEmail}</a></td></tr>
+        <tr><td style='padding:10px; color:#718096; border-bottom:1px solid #edf2f7;'>Phone:</td><td style='padding:10px; color:#1a202c; border-bottom:1px solid #edf2f7;'><a href='tel:{cleanPhone}' style='color:#e65100; text-decoration:none; font-weight:bold;'>+91 {cleanPhone}</a></td></tr>
+        <tr><td style='padding:10px; color:#718096; border-bottom:1px solid #edf2f7;'>Area of Seva:</td><td style='padding:10px; color:#e65100; font-weight:700; border-bottom:1px solid #edf2f7;'>{encodedInterest}</td></tr>
+        <tr><td style='padding:10px; color:#718096;'>Received At:</td><td style='padding:10px; color:#4a5568;'>{istTime}</td></tr>
       </table>
-      <div style='text-align:center; margin-top:20px;'>
-        <a href='mailto:{encodedEmail}?subject=Regarding%20Your%20Volunteer%20Application%20-%20Shriram%20Janki%20Trust' style='display:inline-block; background:#e65100; color:#fff; padding:10px 20px; text-decoration:none; border-radius:6px; font-weight:bold;'>Contact Applicant</a>
+
+      <div style='text-align:center; margin-top:24px;'>
+        <a href='mailto:{encodedEmail}?subject=Regarding%20Your%20Volunteer%20Application%20-%20Shriram%20Janki%20Trust' style='display:inline-block; background:linear-gradient(135deg, #e65100 0%, #f57c00 100%); color:#ffffff; padding:11px 24px; text-decoration:none; border-radius:6px; font-weight:bold; box-shadow:0 2px 6px rgba(230,81,0,0.3);'>Contact Applicant</a>
       </div>
     </div>
-    <div style='background:#fafafa; border-top:1px solid #eee; padding:14px; text-align:center; font-size:11px; color:#888;'>
-      श्रीराम जानकी मंदिर सेवा ट्रस्ट &bull; Ayodhya Dham, UP &bull; Helpline: +91 9918953452
+
+    <!-- Trust Footer -->
+    <div style='background:#fafafa; border-top:1px solid #edf2f7; padding:18px 24px; text-align:center; font-size:12px; color:#718096; line-height:1.6;'>
+      <div style='font-weight:600; color:#4a5568; margin-bottom:3px;'>श्रीराम जानकी मंदिर सेवा ट्रस्ट (SHRI RAM JANKI MANDIR SEWA TRUST)</div>
+      <div>करनपुर, स्टेशन रोड, बभनान - गोण्डा, उ.प्र., भारत - 271313 (निकट राम मंदिर, अयोध्या धाम) &bull; Phone: +91 9918953452, +91 9250931408</div>
+      <div style='margin-top:5px; font-size:11px; color:#a0aec0;'>
+        Darpan ID: UP/2026/0956133 &bull; Reg: 15/B4/G20/2025 &bull; 80G &amp; 12A Registered
+      </div>
     </div>
+
   </div>
-</body>
+ </body>
 </html>";
 
             await SendToMultipleAsync(adminEmails, emailSubject, body);
@@ -389,27 +522,52 @@ namespace RamJankiNGO.Services
 
         public async Task SendPasswordResetOtpEmailAsync(string toEmail, string userName, string otp)
         {
+            // Clean subject without brackets
             string subject = $"Password Reset OTP: {otp} - Shri Ram Janki Trust";
+            string encodedUserName = WebUtility.HtmlEncode(userName ?? "");
+
             string body = $@"
-<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ffd8a8; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);'>
-    <div style='background: linear-gradient(135deg, #d32f2f, #e65100); color: #fff; padding: 24px; text-align: center;'>
-        <h2 style='margin: 0; font-size: 22px;'>श्रीराम जानकी मंदिर सेवा ट्रस्ट</h2>
-        <p style='margin: 5px 0 0; opacity: 0.9; font-size: 13px;'>SHRI RAM JANKI MANDIR SEWA TRUST &bull; Member Portal</p>
+<!DOCTYPE html>
+<html lang='en'>
+<head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'></head>
+<body style='margin:0; padding:20px 0; background-color:#f4f6f9; font-family:""Segoe UI"", Tahoma, Geneva, Verdana, sans-serif;'>
+  <div style='max-width:620px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.08); border:1px solid #ffd8a8;'>
+    
+    <!-- Top Branded Header with Logo -->
+    <div style='background:linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%); padding:28px 24px; text-align:center; color:#ffffff;'>
+      <div style='margin-bottom:12px;'>
+        <img src='cid:trustlogo' alt='Shriram Janki Trust Logo' width='70' height='70' style='display:inline-block; width:70px; height:70px; border-radius:50%; background-color:#ffffff; padding:4px; box-shadow:0 4px 12px rgba(0,0,0,0.25); border:2px solid #ffd8a8; vertical-align:middle;' />
+      </div>
+      <div style='font-size:22px; font-weight:700; letter-spacing:0.5px; margin-bottom:4px;'>श्रीराम जानकी मंदिर सेवा ट्रस्ट</div>
+      <div style='font-size:12px; text-transform:uppercase; letter-spacing:1.5px; opacity:0.95; margin-bottom:14px;'>SHRI RAM JANKI MANDIR SEWA TRUST &bull; AYODHYA DHAM, UP</div>
+      <div style='display:inline-block; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.4); padding:6px 20px; border-radius:20px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px;'>
+        &#128272; Member Portal Password Reset
+      </div>
     </div>
-    <div style='padding: 28px; background: #fff;'>
-        <h3 style='color: #222; margin-top: 0;'>Password Reset Verification Code</h3>
-        <p style='color: #555; font-size: 14px;'>Namaste <strong>{userName}</strong>,</p>
-        <p style='color: #555; font-size: 14px;'>You requested to reset your Member Portal password. Please use the One-Time Password (OTP) below to proceed:</p>
-        <div style='text-align: center; margin: 30px 0;'>
-            <span style='display: inline-block; background: #fff3e0; border: 2px dashed #e65100; color: #e65100; font-size: 32px; font-weight: bold; letter-spacing: 8px; padding: 14px 28px; border-radius: 8px;'>{otp}</span>
-        </div>
-        <p style='color: #d32f2f; font-weight: bold; font-size: 13px; text-align: center;'>âš ï¸ Note: This OTP is strictly valid for only 2 minutes (120 seconds).</p>
-        <p style='color: #777; font-size: 12px; margin-top: 25px;'>If you did not request a password reset, please ignore this email or contact trust administration immediately.</p>
+
+    <div style='padding:28px 24px; background:#ffffff;'>
+      <h3 style='color:#1a202c; margin-top:0;'>Password Reset Verification Code</h3>
+      <p style='color:#4a5568; font-size:14px;'>Namaste <strong>{encodedUserName}</strong>,</p>
+      <p style='color:#4a5568; font-size:14px;'>You requested to reset your Member Portal password. Please use the One-Time Password (OTP) below to proceed:</p>
+      <div style='text-align:center; margin:30px 0;'>
+        <span style='display:inline-block; background:#fff3e0; border:2px dashed #e65100; color:#e65100; font-size:32px; font-weight:bold; letter-spacing:8px; padding:14px 28px; border-radius:8px;'>{otp}</span>
+      </div>
+      <p style='color:#d32f2f; font-weight:bold; font-size:13px; text-align:center;'>&#9888; Note: This OTP is strictly valid for only 2 minutes (120 seconds).</p>
+      <p style='color:#718096; font-size:12px; margin-top:25px;'>If you did not request a password reset, please ignore this email or contact trust administration immediately.</p>
     </div>
-    <div style='background: #fafafa; border-top: 1px solid #eee; padding: 15px; text-align: center; font-size: 11px; color: #888;'>
-        करनपुर, स्टेशन रोड, बभनान - गोण्डा, उ.प्र., भारत - 271313 (निकट राम मंदिर, अयोध्या धाम) &bull; Phone: +91 9918953452, +91 9250931408
+
+    <!-- Trust Footer -->
+    <div style='background:#fafafa; border-top:1px solid #edf2f7; padding:18px 24px; text-align:center; font-size:12px; color:#718096; line-height:1.6;'>
+      <div style='font-weight:600; color:#4a5568; margin-bottom:3px;'>श्रीराम जानकी मंदिर सेवा ट्रस्ट (SHRI RAM JANKI MANDIR SEWA TRUST)</div>
+      <div>करनपुर, स्टेशन रोड, बभनान - गोण्डा, उ.प्र., भारत - 271313 (निकट राम मंदिर, अयोध्या धाम) &bull; Phone: +91 9918953452, +91 9250931408</div>
+      <div style='margin-top:5px; font-size:11px; color:#a0aec0;'>
+        Darpan ID: UP/2026/0956133 &bull; Reg: 15/B4/G20/2025 &bull; 80G &amp; 12A Registered
+      </div>
     </div>
-</div>";
+
+  </div>
+ </body>
+</html>";
             await SendEmailAsync(toEmail, subject, body);
         }
     }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -9,6 +10,130 @@ namespace RamJankiNGO.Services
     public static class AntiSpamValidator
     {
         private static readonly byte[] TokenSecretKey = Encoding.UTF8.GetBytes("SJT_Antispam_Secure_Token_2026_Key!");
+
+        public static int ComputeLevenshteinDistance(string s1, string s2)
+        {
+            if (string.IsNullOrEmpty(s1)) return string.IsNullOrEmpty(s2) ? 0 : s2.Length;
+            if (string.IsNullOrEmpty(s2)) return s1.Length;
+
+            int n = s1.Length;
+            int m = s2.Length;
+            int[,] d = new int[n + 1, m + 1];
+
+            for (int i = 0; i <= n; d[i, 0] = i++) { }
+            for (int j = 0; j <= m; d[0, j] = j++) { }
+
+            for (int i = 1; i <= n; i++)
+            {
+                for (int j = 1; j <= m; j++)
+                {
+                    int cost = (s2[j - 1] == s1[i - 1]) ? 0 : 1;
+                    d[i, j] = Math.Min(
+                        Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1),
+                        d[i - 1, j - 1] + cost);
+                }
+            }
+            return d[n, m];
+        }
+
+        private static readonly Dictionary<string, string> DomainTypoSuggestions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "gail.com", "gmail.com" },
+            { "gmil.com", "gmail.com" },
+            { "gmial.com", "gmail.com" },
+            { "gamil.com", "gmail.com" },
+            { "gmai.com", "gmail.com" },
+            { "gmal.com", "gmail.com" },
+            { "gmaill.com", "gmail.com" },
+            { "gmaik.com", "gmail.com" },
+            { "gmeil.com", "gmail.com" },
+            { "gmaii.com", "gmail.com" },
+            { "gimail.com", "gmail.com" },
+            { "gamail.com", "gmail.com" },
+            { "gmaail.com", "gmail.com" },
+            { "gmailll.com", "gmail.com" },
+            { "gmaul.com", "gmail.com" },
+            { "gnail.com", "gmail.com" },
+            { "hmail.com", "gmail.com" },
+            { "fmail.com", "gmail.com" },
+            { "gemail.com", "gmail.com" },
+            { "g-mail.com", "gmail.com" },
+            { "gmail.co", "gmail.com" },
+            { "gmail.con", "gmail.com" },
+            { "gmail.cpm", "gmail.com" },
+            { "gmail.cm", "gmail.com" },
+            { "gmail.om", "gmail.com" },
+            { "gmail.in", "gmail.com" },
+            { "gmail.co.in", "gmail.com" },
+            { "gmai.co.in", "gmail.com" },
+            { "gamil.co.in", "gmail.com" },
+            { "gmali.com", "gmail.com" },
+            { "gail.co.in", "gmail.com" },
+            { "gail.in", "gmail.com" },
+            { "gmil.in", "gmail.com" },
+            { "gmai.in", "gmail.com" },
+            { "yaho.com", "yahoo.com" },
+            { "yaho.co.in", "yahoo.co.in" },
+            { "yahooo.com", "yahoo.com" },
+            { "yhaoo.com", "yahoo.com" },
+            { "yaho.in", "yahoo.in" },
+            { "yahoo.co", "yahoo.com" },
+            { "yahoo.con", "yahoo.com" },
+            { "yahoo.cm", "yahoo.com" },
+            { "yohoo.com", "yahoo.com" },
+            { "yaboo.com", "yahoo.com" },
+            { "yaoo.com", "yahoo.com" },
+            { "hotmial.com", "hotmail.com" },
+            { "hotmai.com", "hotmail.com" },
+            { "hotmale.com", "hotmail.com" },
+            { "hotmil.com", "hotmail.com" },
+            { "hotmaill.com", "hotmail.com" },
+            { "hotamail.com", "hotmail.com" },
+            { "hotmali.com", "hotmail.com" },
+            { "homail.com", "hotmail.com" },
+            { "hitmail.com", "hotmail.com" },
+            { "outlok.com", "outlook.com" },
+            { "outloo.com", "outlook.com" },
+            { "outllok.com", "outlook.com" },
+            { "outlool.com", "outlook.com" },
+            { "outloook.com", "outlook.com" },
+            { "outlook.co", "outlook.com" },
+            { "outlook.con", "outlook.com" },
+            { "outliok.com", "outlook.com" },
+            { "autlook.com", "outlook.com" },
+            { "redifmail.com", "rediffmail.com" },
+            { "rediff.com", "rediffmail.com" },
+            { "redif.com", "rediffmail.com" },
+            { "rediffmial.com", "rediffmail.com" },
+            { "radiffmail.com", "rediffmail.com" },
+            { "rediffmal.com", "rediffmail.com" },
+            { "icould.com", "icloud.com" },
+            { "iclod.com", "icloud.com" },
+            { "icluod.com", "icloud.com" },
+            { "icloud.co", "icloud.com" }
+        };
+
+        private static readonly (string target, string sld, string label)[] MajorTargets = new[]
+        {
+            ("gmail.com", "gmail", "gmail.com"),
+            ("yahoo.com", "yahoo", "yahoo.com"),
+            ("hotmail.com", "hotmail", "hotmail.com"),
+            ("outlook.com", "outlook", "outlook.com"),
+            ("rediffmail.com", "rediffmail", "rediffmail.com"),
+            ("icloud.com", "icloud", "icloud.com")
+        };
+
+        private static readonly HashSet<string> KnownValidProviders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.in", "yahoo.co.uk", "ymail.com",
+            "outlook.com", "hotmail.com", "live.com", "msn.com", "icloud.com", "me.com", "mac.com",
+            "rediffmail.com", "zoho.com", "zohomail.in", "proton.me", "protonmail.com", "aol.com", "mail.com"
+        };
+
+        private static readonly HashSet<string> BotTlds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "xyz", "top", "cc", "ru", "click", "link", "work", "bid", "cn"
+        };
 
         private static readonly HashSet<string> DisposableEmailDomains = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -32,8 +157,107 @@ namespace RamJankiNGO.Services
             "hack account", "myxa.cc", "xxx*", "hs="
         };
 
+        public static string? DetectDomainTypo(string domain)
+        {
+            if (string.IsNullOrWhiteSpace(domain)) return null;
+            string d = domain.Trim().ToLowerInvariant();
+
+            // 1. Direct dictionary match
+            if (DomainTypoSuggestions.TryGetValue(d, out string? directMatch))
+            {
+                return directMatch;
+            }
+
+            // 2. Pattern checks for gmail typos (e.g. gail.com, gmil.com, gmeil.com)
+            if (d != "gmail.com" && d != "googlemail.com")
+            {
+                if (Regex.IsMatch(d, @"^g[a-z]{2,5}l\.(com|co|in|co\.in)$")) return "gmail.com";
+                if (Regex.IsMatch(d, @"^g.*mail\.(com|co|in)$")) return "gmail.com";
+                if (Regex.IsMatch(d, @"^gm.*l\.(com|co|in)$")) return "gmail.com";
+            }
+
+            if (d != "yahoo.com" && d != "yahoo.co.in" && d != "yahoo.in")
+            {
+                if (Regex.IsMatch(d, @"^y.*hoo\.(com|co|in)$")) return "yahoo.com";
+            }
+
+            if (d != "hotmail.com")
+            {
+                if (Regex.IsMatch(d, @"^hot.*m.*l\.(com|co|in)$")) return "hotmail.com";
+            }
+
+            if (d != "outlook.com")
+            {
+                if (Regex.IsMatch(d, @"^out.*l.*k\.(com|co|in)$")) return "outlook.com";
+            }
+
+            if (d != "rediffmail.com")
+            {
+                if (Regex.IsMatch(d, @"^redif.*mail\.(com|co|in)$")) return "rediffmail.com";
+            }
+
+            // 3. Levenshtein Distance matching against major email providers
+            foreach (var item in MajorTargets)
+            {
+                if (string.Equals(d, item.target, StringComparison.OrdinalIgnoreCase)) continue;
+
+                int distFull = ComputeLevenshteinDistance(d, item.target);
+                if (distFull <= 2)
+                {
+                    return item.label;
+                }
+
+                // Check Second-Level Domain (e.g. "gail" in "gail.com")
+                string sld = d.Split('.')[0];
+                if (!string.IsNullOrEmpty(sld) && !string.Equals(sld, item.sld, StringComparison.OrdinalIgnoreCase))
+                {
+                    int distSld = ComputeLevenshteinDistance(sld, item.sld);
+                    if (distSld <= 2 && distSld > 0)
+                    {
+                        return item.label;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public static bool IsGibberish(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return true;
+            string t = text.Trim();
+            if (t.Length < 8) return true;
+
+            // Count unique alphanumeric characters
+            var uniqueChars = new HashSet<char>();
+            foreach (char ch in t.ToLowerInvariant())
+            {
+                if (char.IsLetterOrDigit(ch)) uniqueChars.Add(ch);
+            }
+            if (uniqueChars.Count <= 3 && t.Length >= 8)
+            {
+                return true; // Rejects repetitive keyboard mash like DASDASDAD, aDASDASDASDASD, asdfasdf, etc.
+            }
+
+            // Repeated chunks of length 2 to 4
+            if (Regex.IsMatch(t, @"^(.{2,4})\1{2,}$", RegexOptions.IgnoreCase))
+            {
+                return true;
+            }
+
+            // Common keyboard mashing sequences
+            string[] mashes = new[] { "asdfghjkl", "qwertyuiop", "zxcvbnm", "asdfasdf", "dasdas", "sdasda", "12345678" };
+            string lower = t.ToLowerInvariant();
+            foreach (var mash in mashes)
+            {
+                if (lower.Contains(mash)) return true;
+            }
+
+            return false;
+        }
+
         /// <summary>
-        /// Validates email address format strictly according to RFC standards and checks disposable domains.
+        /// Validates email address format strictly according to RFC standards, catches domain typos and checks disposable domains.
         /// </summary>
         public static bool IsValidEmail(string? email, out string cleanEmail, out string errorMessage)
         {
@@ -42,7 +266,7 @@ namespace RamJankiNGO.Services
 
             if (string.IsNullOrWhiteSpace(email))
             {
-                errorMessage = "Email address is required.";
+                errorMessage = "ईमेल पता आवश्यक है (Email address is required).";
                 return false;
             }
 
@@ -84,11 +308,47 @@ namespace RamJankiNGO.Services
                 return false;
             }
 
-            // Check disposable domain blacklist
+            // 1. Detect misspelled domain typos (e.g. gmil.com, gail.com -> gmail.com)
+            string? suggestedDomain = DetectDomainTypo(domain);
+            if (!string.IsNullOrEmpty(suggestedDomain))
+            {
+                errorMessage = $"गलत ईमेल डोमेन '{domain}'! क्या आपका मतलब @{suggestedDomain} है? (Invalid domain '{domain}'. Did you mean @{suggestedDomain}?)";
+                return false;
+            }
+
+            // 2. Check disposable domain blacklist
             if (DisposableEmailDomains.Contains(domain))
             {
                 errorMessage = "Temporary / disposable email addresses are not accepted. Please use your genuine personal or work email.";
                 return false;
+            }
+
+            // 3. Reject bot TLDs (.xyz, .top, .cc, .ru, etc.)
+            int dotIdx = domain.LastIndexOf('.');
+            string tld = dotIdx != -1 ? domain.Substring(dotIdx + 1) : "";
+            if (BotTlds.Contains(tld))
+            {
+                errorMessage = $"Domains ending in .{tld} are not accepted. Please use a standard email domain (.com, .in, .org).";
+                return false;
+            }
+
+            // 4. Verify domain DNS host resolution if not a known standard provider
+            if (!KnownValidProviders.Contains(domain) && !domain.EndsWith(".gov.in") && !domain.EndsWith(".nic.in") && !domain.EndsWith(".edu.in") && !domain.EndsWith(".ac.in"))
+            {
+                try
+                {
+                    var hostEntry = System.Net.Dns.GetHostEntry(domain);
+                    if (hostEntry.AddressList == null || hostEntry.AddressList.Length == 0)
+                    {
+                        errorMessage = $"The email domain '{domain}' cannot be verified or does not exist.";
+                        return false;
+                    }
+                }
+                catch
+                {
+                    errorMessage = $"The email domain '{domain}' does not exist or has no active DNS record.";
+                    return false;
+                }
             }
 
             return true;
@@ -109,42 +369,40 @@ namespace RamJankiNGO.Services
                 return false;
             }
 
-            cleanName = Regex.Replace(name.Trim(), @"\s+", " ");
+            cleanName = name.Trim();
 
-            if (cleanName.Length < 2 || cleanName.Length > 60)
+            if (cleanName.Length < 2)
             {
-                errorMessage = "Name must be between 2 and 60 characters.";
+                errorMessage = "Name must be at least 2 characters.";
                 return false;
             }
 
-            // Check for URLs inside the name field (common bot injection)
+            if (cleanName.Length > 60)
+            {
+                errorMessage = "Name cannot exceed 60 characters.";
+                return false;
+            }
+
+            // Disallow URLs, bracket junk, HTML
             string lower = cleanName.ToLowerInvariant();
-            if (lower.Contains("http://") || lower.Contains("https://") || lower.Contains("ftp://") ||
-                lower.Contains(".cc") || lower.Contains(".com") || lower.Contains(".org") ||
-                lower.Contains(".xyz") || lower.Contains(".ru") || lower.Contains("www."))
+            if (lower.Contains("http://") || lower.Contains("https://") || lower.Contains(".com") || lower.Contains(".cc") ||
+                lower.Contains("[") || lower.Contains("]") || lower.Contains("<") || lower.Contains(">") ||
+                cleanName.Contains('~') || cleanName.Contains('*') || cleanName.Contains('$'))
             {
-                errorMessage = "Website links and URLs are not permitted in the Name field.";
+                errorMessage = "Name contains prohibited special characters or URLs.";
                 return false;
             }
 
-            // Check for spam trigger words
             foreach (var kw in SpamKeywords)
             {
                 if (lower.Contains(kw))
                 {
-                    errorMessage = "The entered name contains invalid or prohibited terms.";
+                    errorMessage = "Name contains prohibited words.";
                     return false;
                 }
             }
 
-            // Check for bot symbol characters
-            if (cleanName.IndexOfAny(new[] { '*', '~', '<', '>', '$', '{', '}', '[', ']', '|', '^', '=', '+', '\\', '%', '#', '?' }) >= 0)
-            {
-                errorMessage = "Name contains prohibited special characters.";
-                return false;
-            }
-
-            // Allowed: English letters, Hindi/Devanagari Unicode (\u0900-\u097F), spaces, dots, hyphens, and apostrophes
+            // Allow English and Hindi/Devanagari letters, dots, hyphens, and spaces
             var nameRegex = new Regex(@"^[a-zA-Z\u0900-\u097F\s\.\'\-]{2,60}$", RegexOptions.Compiled);
             if (!nameRegex.IsMatch(cleanName))
             {
@@ -204,7 +462,7 @@ namespace RamJankiNGO.Services
         }
 
         /// <summary>
-        /// Validates message content against link bombing, bot junk strings, and minimum length.
+        /// Validates message content against link bombing, bot junk strings, minimum length, and gibberish.
         /// </summary>
         public static bool IsValidMessage(string? message, out string cleanMessage, out string errorMessage)
         {
@@ -249,6 +507,12 @@ namespace RamJankiNGO.Services
                 }
             }
 
+            if (IsGibberish(cleanMessage))
+            {
+                errorMessage = "कृपया एक सार्थक संदेश लिखें (Please enter a meaningful message describing your inquiry).";
+                return false;
+            }
+
             return true;
         }
 
@@ -258,105 +522,108 @@ namespace RamJankiNGO.Services
         public static string SanitizePhone(string raw)
         {
             if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
-
-            string digitsOnly = Regex.Replace(raw, @"\D", "");
-
-            // If 12 digits starting with 91, strip country code
-            if (digitsOnly.Length == 12 && digitsOnly.StartsWith("91"))
+            string digits = Regex.Replace(raw, @"\D", "");
+            if (digits.Length == 12 && digits.StartsWith("91"))
             {
-                digitsOnly = digitsOnly.Substring(2);
+                digits = digits.Substring(2);
             }
-            // If 11 digits starting with 0, strip leading 0
-            else if (digitsOnly.Length == 11 && digitsOnly.StartsWith("0"))
+            else if (digits.Length == 11 && digits.StartsWith("0"))
             {
-                digitsOnly = digitsOnly.Substring(1);
+                digits = digits.Substring(1);
             }
-
-            return digitsOnly;
+            return digits;
         }
 
         /// <summary>
-        /// Cleans subject line to prevent newline/header injection.
+        /// Cleans subject line to prevent header injection, strips square brackets, and limits length.
         /// </summary>
-        public static string SanitizeSubject(string? subject)
+        public static string SanitizeSubject(string? raw)
         {
-            if (string.IsNullOrWhiteSpace(subject)) return "General Website Inquiry";
-            string clean = Regex.Replace(subject.Trim(), @"[\r\n\t]+", " ");
-            clean = Regex.Replace(clean, @"\s+", " ");
-            if (clean.Length > 60) clean = clean.Substring(0, 60);
+            if (string.IsNullOrWhiteSpace(raw)) return "General Inquiry";
+            string clean = Regex.Replace(raw, @"[\r\n\t]+", " ");
+            clean = Regex.Replace(clean, @"[\[\]]+", " ");
+            clean = Regex.Replace(clean, @"[<>\$~\*]+", "");
+            clean = clean.Trim();
+            if (clean.Length > 60) clean = clean.Substring(0, 60).Trim();
+            if (string.IsNullOrWhiteSpace(clean) || IsGibberish(clean)) return "General Inquiry";
             return clean;
         }
 
         /// <summary>
-        /// Generates a signed timestamp token to protect against instantaneous automated bot POST requests.
+        /// Generates an encrypted time-stamped token to enforce human filling time (>= 2 seconds).
         /// </summary>
         public static string GenerateFormToken()
         {
-            long nowTicks = DateTime.UtcNow.Ticks;
-            string payload = $"{nowTicks}";
+            long timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            string plain = $"{timestamp}:{Guid.NewGuid():N}";
             using (var hmac = new HMACSHA256(TokenSecretKey))
             {
-                byte[] hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(payload));
-                string sig = Convert.ToBase64String(hash);
-                return Convert.ToBase64String(Encoding.UTF8.GetBytes($"{payload}|{sig}"));
+                byte[] hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(plain));
+                string sig = Convert.ToBase64String(hash).Replace("+", "-").Replace("/", "_").TrimEnd('=');
+                string payload = Convert.ToBase64String(Encoding.UTF8.GetBytes(plain)).Replace("+", "-").Replace("/", "_").TrimEnd('=');
+                return $"{payload}.{sig}";
             }
         }
 
         /// <summary>
-        /// Validates that the form was not submitted instantly (&lt; 2.5 seconds) by an automated bot script.
+        /// Validates that form submission took at least 2 seconds and token is under 30 minutes old.
         /// </summary>
-        public static bool ValidateSubmissionTiming(string? formToken, out string error)
+        public static bool ValidateSubmissionTiming(string? token, out string errorMessage)
         {
-            error = string.Empty;
-            if (string.IsNullOrWhiteSpace(formToken))
+            errorMessage = string.Empty;
+            if (string.IsNullOrWhiteSpace(token))
             {
-                // Fallback graceful: allow if token was somehow omitted in non-standard request
+                return true; // Graceful pass if tokens are not yet embedded on every form
+            }
+
+            var parts = token.Split('.');
+            if (parts.Length != 2)
+            {
                 return true;
             }
 
             try
             {
-                byte[] bytes = Convert.FromBase64String(formToken);
-                string decoded = Encoding.UTF8.GetString(bytes);
-                var parts = decoded.Split('|');
-                if (parts.Length != 2) return true;
-
-                string ticksStr = parts[0];
-                string sig = parts[1];
+                string payloadStr = parts[0].Replace("-", "+").Replace("_", "/");
+                switch (payloadStr.Length % 4)
+                {
+                    case 2: payloadStr += "=="; break;
+                    case 3: payloadStr += "="; break;
+                }
+                string plain = Encoding.UTF8.GetString(Convert.FromBase64String(payloadStr));
 
                 using (var hmac = new HMACSHA256(TokenSecretKey))
                 {
-                    byte[] expectedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(ticksStr));
-                    string expectedSig = Convert.ToBase64String(expectedHash);
-                    if (!sig.Equals(expectedSig, StringComparison.Ordinal))
+                    byte[] hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(plain));
+                    string expectedSig = Convert.ToBase64String(hash).Replace("+", "-").Replace("/", "_").TrimEnd('=');
+                    if (expectedSig != parts[1])
                     {
-                        return true; // Signature mismatch, pass through to other validators
+                        return true;
                     }
                 }
 
-                if (long.TryParse(ticksStr, out long ticks))
+                var subParts = plain.Split(':');
+                if (long.TryParse(subParts[0], out long issuedAt))
                 {
-                    var tokenTime = new DateTime(ticks, DateTimeKind.Utc);
-                    var elapsed = DateTime.UtcNow - tokenTime;
+                    long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    long elapsed = now - issuedAt;
 
-                    // If form was submitted in less than 2.0 seconds from page generation, it is almost certainly a bot
-                    if (elapsed.TotalSeconds < 2.0 && elapsed.TotalSeconds >= 0)
+                    if (elapsed < 2)
                     {
-                        error = "Submission was too fast. Please take a moment to review your details.";
+                        errorMessage = "Submission was too fast. Please take your time to fill the form.";
                         return false;
                     }
 
-                    // Expire token after 24 hours
-                    if (elapsed.TotalHours > 24)
+                    if (elapsed > 1800)
                     {
-                        error = "The form session expired. Please refresh the page and try again.";
+                        errorMessage = "Form session expired. Please refresh the page and try again.";
                         return false;
                     }
                 }
             }
             catch
             {
-                // In case of base64 failure, allow graceful fallback
+                return true;
             }
 
             return true;

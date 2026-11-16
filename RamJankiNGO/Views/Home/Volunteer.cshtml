@@ -110,40 +110,57 @@
                         function validateVolEmail(input) {
                             const feedback = document.getElementById('volEmailFeedback');
                             if (!feedback) return;
-                            const val = input.value.trim();
+                            const val = input.value.trim().toLowerCase();
                             if (val.length === 0) {
                                 feedback.style.display = 'none';
+                                input.classList.remove('is-valid', 'is-invalid');
                                 return;
                             }
                             feedback.style.display = 'block';
-                            if (/^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(val)) {
-                                feedback.className = 'small mt-1 text-success';
-                                feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Valid Email';
+                            var res = window.SJTValidator ? window.SJTValidator.validateEmail(val) : { valid: false, message: 'Validating...' };
+                            if (res.valid) {
+                                input.classList.remove('is-invalid');
+                                input.classList.add('is-valid');
+                                feedback.className = 'small mt-1 text-success fw-bold';
+                                feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> ' + res.message;
                             } else {
-                                feedback.className = 'small mt-1 text-danger';
-                                feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Invalid email format';
+                                input.classList.remove('is-valid');
+                                input.classList.add('is-invalid');
+                                feedback.className = 'small mt-1 text-danger fw-bold';
+                                feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> ' + res.message;
                             }
                         }
 
                         document.getElementById('volunteerForm')?.addEventListener('submit', function (e) {
+                            const name = document.getElementById('volName').value.trim();
+                            const nameCheck = window.SJTValidator ? window.SJTValidator.validateName(name) : { valid: name.length >= 2, message: 'Invalid name' };
+                            if (!nameCheck.valid) {
+                                e.preventDefault();
+                                Swal.fire({ icon: 'warning', title: 'Invalid Name', text: nameCheck.message, confirmButtonColor: '#e02b20' });
+                                return;
+                            }
+
                             const phone = document.getElementById('volPhone').value.trim();
-                            if (!/^[6-9]\d{9}$/.test(phone)) {
+                            const phoneCheck = window.SJTValidator ? window.SJTValidator.validateMobile(phone, true) : { valid: /^[6-9]\d{9}$/.test(phone) };
+                            if (!phoneCheck.valid) {
                                 e.preventDefault();
                                 Swal.fire({
                                     icon: 'warning',
                                     title: 'Invalid Mobile Number',
-                                    text: 'Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.',
+                                    text: phoneCheck.message || 'Please enter a valid 10-digit Indian mobile number.',
                                     confirmButtonColor: '#e02b20'
                                 });
                                 return;
                             }
-                            const email = document.getElementById('volEmail').value.trim();
-                            if (!/^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(email)) {
+
+                            const email = document.getElementById('volEmail').value.trim().toLowerCase();
+                            const emailCheck = window.SJTValidator ? window.SJTValidator.validateEmail(email) : { valid: true };
+                            if (!emailCheck.valid) {
                                 e.preventDefault();
                                 Swal.fire({
                                     icon: 'warning',
-                                    title: 'Invalid Email',
-                                    text: 'Please enter a valid email address.',
+                                    title: emailCheck.isTypo ? 'गलत डोमेन (Domain Typo)' : 'अमान्य ईमेल (Invalid Email)',
+                                    text: emailCheck.message,
                                     confirmButtonColor: '#e02b20'
                                 });
                                 return;

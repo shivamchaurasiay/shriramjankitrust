@@ -74,6 +74,25 @@ namespace RamJankiNGO.Areas.Admin.Controllers
         {
             if (!CheckAuth()) return RedirectToAction("Login", "Account", new { area = "Admin" });
 
+            // Validate Mobile
+            if (!AntiSpamValidator.IsValidPhone(model.Mobile, isRequired: true, out string cleanMobile, out string phoneErr))
+            {
+                TempData["ErrorMessage"] = phoneErr;
+                return View(model);
+            }
+            model.Mobile = cleanMobile;
+
+            // Validate Email if provided
+            if (!string.IsNullOrWhiteSpace(model.Email))
+            {
+                if (!AntiSpamValidator.IsValidEmail(model.Email, out string cleanEmail, out string emailErr))
+                {
+                    TempData["ErrorMessage"] = emailErr;
+                    return View(model);
+                }
+                model.Email = cleanEmail;
+            }
+
             if (model.PhotoFile != null && model.PhotoFile.Length > 0)
             {
                 string uploadFolder = Path.Combine(_env.WebRootPath, "uploads", "members");
