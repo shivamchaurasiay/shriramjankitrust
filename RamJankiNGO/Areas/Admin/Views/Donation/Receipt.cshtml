@@ -1,0 +1,545 @@
+@model System.Data.DataRow
+@using System.Data
+@{
+    ViewData["Title"] = "Official Donation Receipt & Invoice - " + (Model["ReceiptNumber"]?.ToString() ?? Model["DonationCode"].ToString());
+    Layout = null;
+    var settings = ViewBag.Settings as RamJankiNGO.Models.SettingsDto ?? new RamJankiNGO.Models.SettingsDto();
+    decimal amount = Convert.ToDecimal(Model["Amount"]);
+    int intAmount = (int)Math.Floor(amount);
+    string amountWords = NumberToWords(intAmount) + " Rupees Only";
+    string receiptNo = Model["ReceiptNumber"]?.ToString() ?? Model["DonationCode"].ToString();
+    DateTime dtCreated = Model["CreatedAt"] != DBNull.Value ? Convert.ToDateTime(Model["CreatedAt"]) : DateTime.Now;
+    string causeTitle = Model["CampaignTitle"] != DBNull.Value && !string.IsNullOrWhiteSpace(Model["CampaignTitle"].ToString())
+        ? Model["CampaignTitle"].ToString()!
+        : "General Social & Charitable Welfare Seva Fund";
+}
+@functions {
+    public static string NumberToWords(int number)
+    {
+        if (number == 0) return "Zero";
+        if (number < 0) return "Minus " + NumberToWords(Math.Abs(number));
+        string words = "";
+        if ((number / 10000000) > 0) { words += NumberToWords(number / 10000000) + " Crore "; number %= 10000000; }
+        if ((number / 100000) > 0) { words += NumberToWords(number / 100000) + " Lakh "; number %= 100000; }
+        if ((number / 1000) > 0) { words += NumberToWords(number / 1000) + " Thousand "; number %= 1000; }
+        if ((number / 100) > 0) { words += NumberToWords(number / 100) + " Hundred "; number %= 100; }
+        if (number > 0)
+        {
+            var unitsMap = new[] { "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen" };
+            var tensMap = new[] { "Zero", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety" };
+            if (number < 20) words += unitsMap[number];
+            else
+            {
+                words += tensMap[number / 10];
+                if ((number % 10) > 0) words += " " + unitsMap[number % 10];
+            }
+        }
+        return words.Trim();
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Donation Invoice / Receipt - @receiptNo | Shri Ram Janki Mandir Sewa Trust</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Tiro+Devanagari+Hindi:ital@0;1&family=Mukta:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f1f3f6;
+            font-family: 'Mukta', 'Segoe UI', Tahoma, sans-serif;
+            color: #222;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .action-bar {
+            max-width: 860px;
+            margin: 20px auto 10px auto;
+        }
+
+        /* LETTERHEAD CONTAINER (Matching Page 27 of Trust PDF) */
+        .invoice-letterhead {
+            max-width: 860px;
+            margin: 10px auto 40px auto;
+            background: #ffffff;
+            border: 2px solid #e65100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 1080px;
+        }
+
+        /* TOP OFFICIAL BANNER */
+        .trust-top-banner {
+            background: linear-gradient(135deg, #f57c00 0%, #e65100 50%, #bf360c 100%);
+            color: #ffffff;
+            padding: 16px 24px 14px 24px;
+            position: relative;
+            border-bottom: 4px solid #ffd54f;
+        }
+
+        .top-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #fff9c4;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+            padding-bottom: 6px;
+            margin-bottom: 10px;
+        }
+
+        .trust-brand-center {
+            text-align: center;
+        }
+
+        .trust-main-hindi-title {
+            font-family: 'Mukta', 'Tiro Devanagari Hindi', serif;
+            font-size: 34px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin: 0;
+            line-height: 1.15;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            color: #ffffff;
+        }
+
+        .trust-main-eng-title {
+            font-family: 'Cinzel', serif;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #ffe082;
+            margin-top: 2px;
+            margin-bottom: 4px;
+        }
+
+        .trust-tagline-hindi {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.2);
+            display: inline-block;
+            padding: 3px 16px;
+            border-radius: 20px;
+            margin-top: 4px;
+        }
+
+        /* SUBHEADER ROW */
+        .subheader-row {
+            background-color: #fff8e1;
+            border-bottom: 2px solid #ffe082;
+            padding: 10px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .adhyaksh-info {
+            color: #b71c1c;
+            font-weight: 700;
+        }
+
+        .receipt-reg-badge {
+            background: #d84315;
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        /* WATERMARK */
+        .watermark-emblem {
+            position: absolute;
+            top: 48%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 440px;
+            height: 440px;
+            opacity: 0.055;
+            pointer-events: none;
+            user-select: none;
+            z-index: 1;
+        }
+
+        /* INVOICE BODY */
+        .invoice-body {
+            padding: 30px 36px;
+            position: relative;
+            z-index: 2;
+            flex-grow: 1;
+        }
+
+        .invoice-title-pill {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .invoice-title-pill span {
+            background: #e65100;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 6px 28px;
+            border-radius: 30px;
+            box-shadow: 0 3px 8px rgba(230, 81, 0, 0.3);
+            display: inline-block;
+        }
+
+        .donor-box {
+            background: #ffffff;
+            border: 1px solid #ffd54f;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .donor-box-header {
+            background: #fff8e1;
+            padding: 8px 16px;
+            font-weight: 700;
+            font-size: 14px;
+            color: #bf360c;
+            border-bottom: 1px solid #ffe082;
+        }
+
+        .details-table th {
+            width: 25%;
+            background-color: #fafafa;
+            color: #555;
+            font-weight: 600;
+            font-size: 13.5px;
+            padding: 9px 14px;
+            border-color: #f0e6dd;
+        }
+
+        .details-table td {
+            font-size: 14px;
+            padding: 9px 14px;
+            color: #222;
+            border-color: #f0e6dd;
+        }
+
+        /* AMOUNT HIGHLIGHT CARD */
+        .amount-receipt-card {
+            background: linear-gradient(to right, #fff3e0, #ffffff);
+            border-left: 6px solid #e65100;
+            border-radius: 6px;
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-top: 1px solid #ffe0b2;
+            border-right: 1px solid #ffe0b2;
+            border-bottom: 1px solid #ffe0b2;
+        }
+
+        .tax-exemption-note {
+            background-color: #f1f8e9;
+            border: 1px solid #c5e1a5;
+            border-radius: 6px;
+            padding: 12px 16px;
+            font-size: 12.5px;
+            color: #2e7d32;
+            line-height: 1.5;
+            margin-top: 15px;
+        }
+
+        /* SIGNATURE & SEAL */
+        .signature-section {
+            margin-top: 40px;
+            padding-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .official-seal {
+            border: 2px dashed #e65100;
+            border-radius: 50%;
+            width: 110px;
+            height: 110px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #bf360c;
+            padding: 8px;
+            transform: rotate(-8deg);
+            background: rgba(255, 243, 224, 0.4);
+        }
+
+        .signatory-box {
+            text-align: center;
+            width: 220px;
+        }
+
+        .sign-img {
+            height: 48px;
+            margin-bottom: 4px;
+        }
+
+        .sign-line {
+            border-top: 1.5px solid #222;
+            padding-top: 4px;
+            font-weight: 700;
+            font-size: 13.5px;
+            color: #222;
+        }
+
+        /* BOTTOM OFFICIAL FOOTER RIBBON (Matching Page 27 of Trust PDF) */
+        .trust-bottom-ribbon {
+            background: linear-gradient(135deg, #bf360c 0%, #e65100 50%, #f57c00 100%);
+            color: #ffffff;
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 13.5px;
+            font-weight: 700;
+            border-top: 4px solid #ffd54f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @@media print {
+            body {
+                background: #ffffff !important;
+                margin: 0;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .invoice-letterhead {
+                box-shadow: none !important;
+                border: 2px solid #e65100 !important;
+                margin: 0 auto !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: auto !important;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Action Bar (hidden in print) -->
+<div class="action-bar no-print">
+    <div class="card shadow-sm border-0 rounded-3 p-3 bg-white d-flex flex-row justify-content-between align-items-center">
+        <div>
+            <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm me-2">
+                <i class="fa fa-arrow-left me-1"></i> Back
+            </a>
+            <a href="/" class="btn btn-outline-dark btn-sm">
+                <i class="fa fa-home me-1"></i> Website Home
+            </a>
+            <a href="/MemberPortal/Dashboard" class="btn btn-outline-danger btn-sm ms-2">
+                <i class="fa fa-tachometer-alt me-1"></i> Member Dashboard
+            </a>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-success text-white px-3 py-2 rounded-pill small fw-semibold shadow-sm">
+                <i class="fa fa-check-circle me-1"></i> Payment Received &bull; @receiptNo
+            </span>
+            <button onclick="window.print()" class="btn btn-danger btn-sm px-4 fw-bold shadow-sm">
+                <i class="fa fa-print me-1"></i> Print / Save as PDF
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- OFFICIAL INVOICE / LETTERHEAD -->
+<div class="invoice-letterhead" id="printReceiptArea">
+
+    <!-- Watermark Background -->
+    <svg class="watermark-emblem" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="100" cy="100" r="90" fill="none" stroke="#e65100" stroke-width="4" stroke-dasharray="8,4" />
+        <circle cx="100" cy="100" r="78" fill="none" stroke="#e65100" stroke-width="2" />
+        <circle cx="100" cy="100" r="60" fill="none" stroke="#e65100" stroke-width="1.5" />
+        <path d="M100 30 L108 55 L135 55 L113 72 L121 98 L100 82 L79 98 L87 72 L65 55 L92 55 Z" fill="#e65100" opacity="0.3" />
+        <text x="100" y="140" font-size="11" font-weight="bold" fill="#e65100" text-anchor="middle">श्रीराम जानकी मंदिर सेवा ट्रस्ट</text>
+        <text x="100" y="155" font-size="8" fill="#e65100" text-anchor="middle">सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामया</text>
+    </svg>
+
+    <!-- Top Official Banner (Page 27) -->
+    <div class="trust-top-banner">
+        <div class="top-meta-row">
+            <div>
+                <i class="fa fa-certificate me-1"></i> NPO Darpan Id : <strong>UP/2026/0956133</strong>
+            </div>
+            <div>
+                <i class="fa fa-file-contract me-1"></i> Reg. No : <strong>15/B4/G20/2025</strong>
+            </div>
+        </div>
+
+        <div class="trust-brand-center">
+            <h1 class="trust-main-hindi-title">श्रीराम जानकी मंदिर सेवा ट्रस्ट</h1>
+            <div class="trust-main-eng-title">SHRI RAM JANKI MANDIR SEWA TRUST</div>
+            <div class="trust-tagline-hindi">आयकर अधिनियम की धारा 80G और 12A में पंजीकृत संस्था</div>
+        </div>
+    </div>
+
+    <!-- Subheader Row (Page 27) -->
+    <div class="subheader-row">
+        <div class="adhyaksh-info">
+            <span>अध्यक्ष : </span><strong>पवन कुमार वर्मा</strong> &nbsp;
+            <a href="tel:+919918953452" class="text-decoration-none text-danger fw-bold"><i class="fa fa-phone-alt me-1"></i> 99189 53452</a>
+        </div>
+        <div>
+            <span>पत्रांक / Receipt No : </span><strong class="receipt-reg-badge">@receiptNo</strong>
+        </div>
+        <div>
+            <span>दिनांक / Date : </span><strong class="text-dark">@dtCreated.ToString("dd/MM/yyyy")</strong>
+        </div>
+    </div>
+
+    <!-- Main Invoice Body -->
+    <div class="invoice-body">
+        <div class="invoice-title-pill">
+            <span>OFFICIAL DONATION INVOICE &amp; 80G RECEIPT</span>
+        </div>
+
+        <!-- Donor Information Box -->
+        <div class="donor-box shadow-sm">
+            <div class="donor-box-header d-flex justify-content-between align-items-center">
+                <span><i class="fa fa-user-check me-2"></i> DONOR DETAILS (दानदाता विवरण)</span>
+                <span class="badge bg-success">PAYMENT VERIFIED &amp; CONFIRMED</span>
+            </div>
+            <table class="table table-bordered details-table mb-0">
+                <tbody>
+                    <tr>
+                        <th>Donor Name (दानदाता का नाम)</th>
+                        <td class="fw-bold fs-6 text-dark">@Model["DonorName"]</td>
+                        <th>Mobile Number (मोबाइल)</th>
+                        <td class="fw-bold">@Model["DonorPhone"]</td>
+                    </tr>
+                    <tr>
+                        <th>Email Address (ईमेल)</th>
+                        <td>@(Model["DonorEmail"] != DBNull.Value && !string.IsNullOrWhiteSpace(Model["DonorEmail"].ToString()) ? Model["DonorEmail"].ToString() : "N/A")</td>
+                        <th>PAN Number (पैन कार्ड)</th>
+                        <td>
+                            @if (Model["DonorPan"] != DBNull.Value && !string.IsNullOrWhiteSpace(Model["DonorPan"].ToString()))
+                            {
+                                <span class="badge bg-light text-dark border font-monospace fs-6">@Model["DonorPan"]</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Not Provided</span>
+                            }
+                        </td>
+                    </tr>
+                    @if (Model["DonorAddress"] != DBNull.Value && !string.IsNullOrWhiteSpace(Model["DonorAddress"].ToString()))
+                    {
+                        <tr>
+                            <th>Residential Address (पता)</th>
+                            <td colspan="3">@Model["DonorAddress"]</td>
+                        </tr>
+                    }
+                    <tr>
+                        <th>Seva Cause / Purpose (सहयोग मद)</th>
+                        <td colspan="3" class="fw-bold text-dark">
+                            <i class="fa fa-hands-helping text-danger me-1"></i> @causeTitle
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Payment Mode (भुगतान माध्यम)</th>
+                        <td><span class="badge bg-secondary">@Model["PaymentMode"]</span></td>
+                        <th>Transaction Reference (यूटीआर / संदर्भ)</th>
+                        <td class="font-monospace fw-bold text-dark">
+                            @(Model["PaymentGatewayReference"] != DBNull.Value ? Model["PaymentGatewayReference"].ToString() : Model["DonationCode"].ToString())
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Financial Amount Section -->
+        <div class="amount-receipt-card shadow-sm">
+            <div class="row align-items-center">
+                <div class="col-md-7">
+                    <span class="text-muted small fw-bold d-block text-uppercase">Total Donation Amount Received (प्राप्त दान राशि)</span>
+                    <h2 class="text-danger fw-bold mb-1" style="font-size: 2.2rem;">&#8377;@amount.ToString("N2")</h2>
+                    <div class="small fw-semibold text-secondary">
+                        <span class="text-dark fw-bold">In Words:</span> <em>@amountWords</em>
+                    </div>
+                </div>
+                <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                    <div class="p-2 border rounded bg-white text-center d-inline-block">
+                        <span class="small d-block text-muted">Beneficiary Account</span>
+                        <strong class="text-dark small d-block">INDIAN BANK</strong>
+                        <span class="font-monospace small text-muted">A/C: 8242427234</span>
+                    </div>
+                </div>
+            </div>
+            @if (Model["Notes"] != DBNull.Value && !string.IsNullOrWhiteSpace(Model["Notes"].ToString()))
+            {
+                <div class="mt-2 pt-2 border-top text-muted small">
+                    <strong>Donor Note:</strong> @Model["Notes"]
+                </div>
+            }
+        </div>
+
+        <!-- 80G & 12A Tax Exemption Legal Notice -->
+        <div class="tax-exemption-note">
+            <div class="d-flex align-items-start gap-2">
+                <i class="fa fa-info-circle fs-5 text-success mt-1"></i>
+                <div>
+                    <strong class="d-block text-dark">Section 80G Tax Exemption Certificate</strong>
+                    Donations to <strong>SHRI RAM JANKI MANDIR SEWA TRUST</strong> are eligible for 50% tax deduction under Section 80G(5)(iv) of the Income Tax Act, 1961.<br>
+                    <strong>80G Unique Registration No (URN):</strong> ABLTS7164DF20261 &bull; <strong>12A URN:</strong> ABLTS7164DE20251 &bull; <strong>Trust PAN:</strong> ABLTS7164D &bull; <strong>CSR Reg No:</strong> CSR00110689.
+                </div>
+            </div>
+        </div>
+
+        <!-- Official Signatures & Seal -->
+        <div class="signature-section">
+            <div class="official-seal">
+                <span>श्रीराम जानकी मंदिर</span>
+                <span class="fw-bold my-1">SEAL</span>
+                <span>सेवा ट्रस्ट, गोण्डा</span>
+            </div>
+
+            <div class="text-center small text-muted" style="max-width: 320px;">
+                <p class="mb-0">
+                    <i class="fa fa-check-circle text-success me-1"></i> Verified Digital Receipt.<br>
+                    We express our deepest gratitude for your noble contribution toward societal welfare and seva.
+                </p>
+            </div>
+
+            <div class="signatory-box">
+                <div class="font-monospace text-danger fw-bold fst-italic" style="font-size: 1.15rem; transform: rotate(-3deg);">
+                    Pawan Kr. Verma
+                </div>
+                <div class="sign-line">
+                    पवन कुमार वर्मा<br>
+                    <span class="text-muted small fw-normal">अध्यक्ष / Managing Trustee</span><br>
+                    <span class="text-danger fw-bold" style="font-size: 11px;">श्रीराम जानकी मंदिर सेवा ट्रस्ट</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Official Footer Ribbon (Page 27) -->
+    <div class="trust-bottom-ribbon">
+        <i class="fa fa-map-marker-alt"></i>
+        <span>स्टेशन रोड, करनपुर, बभनान - गोण्डा, उ.प्र., भारत - 271313</span>
+    </div>
+
+</div>
+
+</body>
+</html>

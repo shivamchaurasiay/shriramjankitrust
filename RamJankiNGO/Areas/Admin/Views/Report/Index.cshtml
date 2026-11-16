@@ -1,0 +1,139 @@
+@model System.Data.DataTable
+@using System.Data
+@{
+    ViewData["Title"] = "Donation Financial Reports";
+    Layout = "~/Areas/Admin/Views/Shared/_adminLayout.cshtml";
+    var filter = ViewBag.Filter as RamJankiNGO.Models.DonationReportFilterDto ?? new RamJankiNGO.Models.DonationReportFilterDto();
+    decimal totalConfirmed = 0;
+    int successCount = 0;
+    foreach (DataRow r in Model.Rows)
+    {
+        if (r["PaymentStatus"].ToString() == "Successful")
+        {
+            totalConfirmed += Convert.ToDecimal(r["Amount"]);
+            successCount++;
+        }
+    }
+}
+
+<div class="page-body">
+    <div class="container-fluid">
+        <div class="page-title">
+            <div class="row">
+                <div class="col-6">
+                    <h4>Donations & Financial Reports</h4>
+                </div>
+                <div class="col-6">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/Admin/Dashboard/Index"><i data-feather="home"></i></a></li>
+                        <li class="breadcrumb-item">Reports</li>
+                        <li class="breadcrumb-item active">Donations</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <!-- Highlights -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <div class="card p-3 shadow-sm border-0 bg-success text-white">
+                    <span class="f-12 text-white-50">CONFIRMED DONATION TOTAL</span>
+                    <h3 class="mb-0 text-white font-weight-bold">₹@totalConfirmed.ToString("N0")</h3>
+                    <small>@successCount successful donations</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-3 shadow-sm border-0 bg-primary text-white">
+                    <span class="f-12 text-white-50">TOTAL RECORDS IN SELECTION</span>
+                    <h3 class="mb-0 text-white font-weight-bold">@Model.Rows.Count</h3>
+                    <small>All transactions</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="f-w-600 mb-0"><i class="fa fa-chart-bar text-primary me-2"></i> Filtered Audit & Financial Trail</h5>
+                <a href="/Admin/Donation/ExportToExcel?@Context.Request.QueryString" class="btn btn-outline-success btn-sm">
+                    <i class="fa fa-file-excel me-1"></i> Export Excel
+                </a>
+            </div>
+            <div class="card-body">
+                <form method="get" action="/Admin/Report/Index" class="row g-2 mb-4 bg-light p-3 rounded">
+                    <div class="col-md-3">
+                        <label class="form-label f-12 text-muted mb-1">From Date</label>
+                        <input type="date" name="StartDate" class="form-control form-control-sm" value="@(filter.StartDate?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label f-12 text-muted mb-1">To Date</label>
+                        <input type="date" name="EndDate" class="form-control form-control-sm" value="@(filter.EndDate?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label f-12 text-muted mb-1">Payment Status</label>
+                        <select name="PaymentStatus" class="form-select form-select-sm">
+                            <option value="">All</option>
+                            <option value="Successful" selected="@(filter.PaymentStatus == "Successful")">Successful</option>
+                            <option value="Pending" selected="@(filter.PaymentStatus == "Pending")">Pending</option>
+                            <option value="Refunded" selected="@(filter.PaymentStatus == "Refunded")">Refunded</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end gap-1">
+                        <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fa fa-search me-1"></i> Generate Report</button>
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Receipt No</th>
+                                <th>Date</th>
+                                <th>Donor Name</th>
+                                <th>Mobile</th>
+                                <th>Cause</th>
+                                <th>Mode</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model != null && Model.Rows.Count > 0)
+                            {
+                                foreach (DataRow row in Model.Rows)
+                                {
+                                    <tr>
+                                        <td>@(row["ReceiptNumber"]?.ToString() ?? row["DonationCode"].ToString())</td>
+                                        <td>@Convert.ToDateTime(row["CreatedAt"]).ToString("dd/MM/yyyy")</td>
+                                        <td class="f-w-600">@row["DonorName"]</td>
+                                        <td>@row["DonorPhone"]</td>
+                                        <td>@(row["CampaignTitle"] != DBNull.Value ? row["CampaignTitle"].ToString() : "General")</td>
+                                        <td>@row["PaymentMode"]</td>
+                                        <td class="f-w-600 text-success">₹@Convert.ToDecimal(row["Amount"]).ToString("N0")</td>
+                                        <td>
+                                            @if (row["PaymentStatus"].ToString() == "Successful")
+                                            {
+                                                <span class="badge bg-success">Successful</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">@row["PaymentStatus"]</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-4">No records found for the selected date range.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

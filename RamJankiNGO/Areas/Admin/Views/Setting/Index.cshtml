@@ -1,0 +1,111 @@
+@model RamJankiNGO.Models.SettingsDto
+@{
+    ViewData["Title"] = "System Settings";
+    Layout = "~/Areas/Admin/Views/Shared/_adminLayout.cshtml";
+}
+
+<div class="page-body">
+    <div class="container-fluid">
+        <div class="page-title">
+            <div class="row">
+                <div class="col-6">
+                    <h4>System & Organization Configuration</h4>
+                </div>
+                <div class="col-6">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/Admin/Dashboard/Index"><i data-feather="home"></i></a></li>
+                        <li class="breadcrumb-item">Configuration</li>
+                        <li class="breadcrumb-item active">Settings</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xl-9 col-lg-11 mx-auto">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header pb-0">
+                        <h5 class="f-w-600 mb-0"><i class="fa fa-cogs text-secondary me-2"></i> Organization & Receipt Numbering Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="/Admin/Setting/Index">
+                            <h6 class="text-primary f-w-600 mb-3 border-bottom pb-2">1. Organization Details</h6>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Legal Organization Name</label>
+                                    <input type="text" asp-for="OrgName" class="form-control" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Official Tagline / Mission</label>
+                                    <input type="text" asp-for="OrgTagline" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Official Email</label>
+                                    <input type="email" asp-for="OrgEmail" class="form-control" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Official Contact Number</label>
+                                    <input type="text" asp-for="OrgPhone" class="form-control" required />
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label f-w-600">Registered Office Address</label>
+                                    <input type="text" asp-for="OrgAddress" class="form-control" required />
+                                </div>
+                            </div>
+
+                            <h6 class="text-primary f-w-600 mb-3 border-bottom pb-2">2. Receipt & Member Numbering Rules</h6>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Donation Receipt Prefix</label>
+                                    <input type="text" asp-for="ReceiptPrefix" class="form-control" placeholder="e.g. SJT" required />
+                                    <small class="text-muted">Generates receipt numbers formatted like: SJT-2026-1001</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Receipt Next Sequence Number</label>
+                                    <input type="number" asp-for="ReceiptNextNumber" class="form-control" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Member ID Prefix</label>
+                                    <input type="text" asp-for="MemberPrefix" class="form-control" placeholder="e.g. MEM" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Member Next Sequence Number</label>
+                                    <input type="number" asp-for="MemberNextNumber" class="form-control" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Default Currency</label>
+                                    <input type="text" asp-for="Currency" class="form-control" value="INR" readonly />
+                                </div>
+                            </div>
+
+                            <h6 class="text-primary f-w-600 mb-3 border-bottom pb-2">3. Payment Gateway Configuration (Razorpay)</h6>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Razorpay Key ID</label>
+                                    <input type="text" asp-for="RazorpayKeyId" class="form-control" placeholder="rzp_test_..." />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Razorpay Key Secret</label>
+                                    <input type="password" asp-for="RazorpayKeySecret" class="form-control" placeholder="Secret Key" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Gateway Mode</label>
+                                    <select asp-for="EnableLiveGateway" class="form-select">
+                                        <option value="0">Demo / Simulation Mode (Instant Safe Testing)</option>
+                                        <option value="1">Live Gateway Mode (Requires active credentials)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <button type="submit" class="btn btn-primary"><i class="fa fa-save me-1"></i> Save Configuration</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

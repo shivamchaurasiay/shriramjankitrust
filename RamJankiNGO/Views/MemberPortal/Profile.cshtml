@@ -1,0 +1,204 @@
+@model RamJankiNGO.Models.MemberDto
+@{
+    ViewData["Title"] = "My Member Profile";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="ul-breadcrumb">
+    <div class="ul-container container">
+        <h2 class="ul-breadcrumb-title">My Profile</h2>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/MemberPortal/Dashboard">Member Portal</a></li>
+            <li>Profile</li>
+        </ul>
+    </div>
+</div>
+
+<section class="ul-section-spacing" style="background: #faf8f5;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0 rounded-4 p-4 p-md-5 bg-white">
+                    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                        <div>
+                            <h4 class="fw-bold mb-0">Member Profile Details</h4>
+                            <span class="badge bg-secondary">Member ID: @Model.MemberCode</span>
+                        </div>
+                        <div>
+                            <span class="badge bg-success py-2 px-3">Active Member</span>
+                        </div>
+                    </div>
+
+                    @if (TempData["AuthSuccess"] != null)
+                    {
+                        <div class="alert alert-success py-2">@TempData["AuthSuccess"]</div>
+                    }
+
+                    <form method="post" action="/MemberPortal/Profile" autocomplete="off">
+                        <input type="hidden" asp-for="MemberId" />
+                        <input type="hidden" asp-for="MemberCode" />
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Full Name</label>
+                                <input type="text" asp-for="FullName" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Mobile Number</label>
+                                <input type="text" asp-for="Mobile" class="form-control" readonly />
+                                <small class="text-muted">Contact admin to update mobile number</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Email Address</label>
+                                <input type="email" asp-for="Email" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Date of Birth</label>
+                                <input type="date" asp-for="DateOfBirth" class="form-control" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Address</label>
+                                <input type="text" asp-for="Address" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">State (राज्य)</label>
+                                <select asp-for="State" id="profileStateSelect" class="form-select" onchange="populateProfileCities()">
+                                    <option value="">-- Select State --</option>
+                                    <option value="Uttar Pradesh">Uttar Pradesh (उत्तर प्रदेश)</option>
+                                    <option value="Bihar">Bihar (बिहार)</option>
+                                    <option value="Madhya Pradesh">Madhya Pradesh (मध्य प्रदेश)</option>
+                                    <option value="Delhi">Delhi (दिल्ली)</option>
+                                    <option value="Rajasthan">Rajasthan (राजस्थान)</option>
+                                    <option value="Haryana">Haryana (हरियाणा)</option>
+                                    <option value="Uttarakhand">Uttarakhand (उत्तराखंड)</option>
+                                    <option value="Maharashtra">Maharashtra (महाराष्ट्र)</option>
+                                    <option value="Gujarat">Gujarat (गुजरात)</option>
+                                    <option value="West Bengal">West Bengal (पश्चिम बंगाल)</option>
+                                    <option value="Punjab">Punjab (पंजाब)</option>
+                                    <option value="Jharkhand">Jharkhand (झारखंड)</option>
+                                    <option value="Chhattisgarh">Chhattisgarh (छत्तीसगढ़)</option>
+                                    <option value="Other">Other State</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">City / District (शहर / जिला)</label>
+                                <select asp-for="City" id="profileCitySelect" class="form-select">
+                                    <option value="">-- Select City / District --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">PIN Code</label>
+                                <input type="text" asp-for="PinCode" maxlength="6" class="form-control" />
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex justify-content-end gap-2">
+                            <a href="/MemberPortal/Dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
+                            <button type="submit" class="btn btn-danger fw-bold">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        const stateCityData = {
+            "Uttar Pradesh": [
+                "Gonda", "Ayodhya", "Basti", "Balrampur", "Bahraich", "Barabanki", "Lucknow", "Gorakhpur",
+                "Varanasi", "Prayagraj", "Kanpur", "Sultanpur", "Ambedkar Nagar", "Amethi", "Raebareli",
+                "Sitapur", "Hardoi", "Lakhimpur Kheri", "Unnao", "Fatehpur", "Pratapgarh", "Kaushambi",
+                "Agra", "Mathura", "Aligarh", "Bareilly", "Moradabad", "Meerut", "Ghaziabad", "Gautam Buddha Nagar (Noida)",
+                "Jhansi", "Jaunpur", "Mirzapur", "Azamgarh", "Mau", "Ballia", "Ghazipur", "Deoria", "Kushinagar",
+                "Maharajganj", "Sant Kabir Nagar", "Siddharthnagar", "Chandauli", "Bhadohi", "Sonbhadra", "Banda",
+                "Chitrakoot", "Hamirpur", "Mahoba", "Jalaun", "Lalitpur", "Shahjahanpur", "Pilibhit", "Budaun",
+                "Sambhal", "Rampur", "Bijnor", "Amroha", "Saharanpur", "Muzaffarnagar", "Shamli", "Baghpat",
+                "Bulandshahr", "Hapur", "Hathras", "Kasganj", "Etah", "Mainpuri", "Firozabad", "Farrukhabad",
+                "Kannauj", "Etawah", "Auraiya"
+            ],
+            "Bihar": [
+                "Patna", "Gaya", "Muzaffarpur", "Bhagalpur", "Darbhanga", "Purnia", "Begusarai", "Samastipur",
+                "Madhubani", "Saran (Chhapra)", "Siwan", "Gopalganj", "Vaishali", "Nalanda", "Rohtas", "Buxar",
+                "Bhojpur (Ara)", "Munger", "Khagaria", "Saharsa", "Katihar", "Kishanganj", "Araria", "West Champaran",
+                "East Champaran", "Sitamarhi", "Sheohar", "Aurangabad", "Jehanabad", "Arwal", "Nawada", "Jamui", "Banka"
+            ],
+            "Madhya Pradesh": [
+                "Bhopal", "Indore", "Gwalior", "Jabalpur", "Ujjain", "Rewa", "Satna", "Sagar", "Chhatarpur",
+                "Damoh", "Katni", "Singrauli", "Sidhi", "Hoshangabad", "Ratlam", "Dewas", "Khandwa", "Khargone"
+            ],
+            "Delhi": [
+                "Central Delhi", "New Delhi", "North Delhi", "South Delhi", "East Delhi", "West Delhi",
+                "North East Delhi", "North West Delhi", "South East Delhi", "South West Delhi", "Shahdara"
+            ],
+            "Rajasthan": [
+                "Jaipur", "Jodhpur", "Udaipur", "Kota", "Bikaner", "Ajmer", "Alwar", "Bhilwara", "Sikar",
+                "Bharatpur", "Pali", "Sri Ganganagar", "Chittorgarh", "Jhunjhunu", "Barmer", "Nagaur"
+            ],
+            "Haryana": [
+                "Gurugram", "Faridabad", "Panipat", "Ambala", "Karnal", "Rohtak", "Hisar", "Sonipat", "Panchkula", "Yamunanagar"
+            ],
+            "Uttarakhand": [
+                "Dehradun", "Haridwar", "Nainital", "Rishikesh", "Roorkee", "Haldwani", "Udham Singh Nagar", "Almora", "Pauri Garhwal"
+            ],
+            "Maharashtra": [
+                "Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Aurangabad", "Solapur", "Kolhapur", "Amravati", "Navi Mumbai"
+            ],
+            "Gujarat": [
+                "Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar", "Gandhinagar", "Junagadh", "Anand"
+            ],
+            "West Bengal": [
+                "Kolkata", "Howrah", "Durgapur", "Asansol", "Siliguri", "Bardhaman", "Kharagpur", "Malda", "Darjeeling"
+            ],
+            "Punjab": [
+                "Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda", "Mohali", "Hoshiarpur", "Pathankot"
+            ],
+            "Jharkhand": [
+                "Ranchi", "Jamshedpur", "Dhanbad", "Bokaro", "Deoghar", "Hazaribagh", "Giridih", "Ramgarh"
+            ],
+            "Chhattisgarh": [
+                "Raipur", "Bhilai", "Bilaspur", "Korba", "Rajnandgaon", "Durg", "Raigarh", "Jagdalpur"
+            ],
+            "Other": [
+                "Other City"
+            ]
+        };
+
+        function populateProfileCities() {
+            const state = document.getElementById('profileStateSelect').value;
+            const citySelect = document.getElementById('profileCitySelect');
+            const selectedCity = '@(Model?.City ?? "")';
+
+            citySelect.innerHTML = '<option value="">-- Select City / District --</option>';
+
+            if (state && stateCityData[state]) {
+                stateCityData[state].forEach(city => {
+                    const opt = document.createElement('option');
+                    opt.value = city;
+                    opt.text = city;
+                    if (city === selectedCity) {
+                        opt.selected = true;
+                    }
+                    citySelect.appendChild(opt);
+                });
+            } else if (state) {
+                const opt = document.createElement('option');
+                opt.value = selectedCity || "Other City";
+                opt.text = selectedCity || "Other City";
+                opt.selected = true;
+                citySelect.appendChild(opt);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const currentState = '@(Model?.State ?? "Uttar Pradesh")';
+            const stateSelect = document.getElementById('profileStateSelect');
+            if (currentState && stateSelect) {
+                stateSelect.value = currentState;
+            }
+            populateProfileCities();
+        });
+    </script>
+}

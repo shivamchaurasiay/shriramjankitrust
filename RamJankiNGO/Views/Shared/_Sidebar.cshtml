@@ -1,0 +1,368 @@
+﻿@using Microsoft.AspNetCore.Http
+@{
+    var memberName = Context.Session.GetString("MemberName");
+}
+
+<style>
+    /* Premium Mobile Navigation Drawer */
+    .ul-sidebar {
+        width: 320px !important;
+        max-width: 86vw !important;
+        background: #ffffff !important;
+        padding: 20px 16px !important;
+        box-shadow: -10px 0 35px rgba(0, 0, 0, 0.18) !important;
+        border-left: 3px solid #e02b20 !important;
+        z-index: 1050 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow-y: auto !important;
+        scrollbar-width: thin;
+    }
+
+    .ul-sidebar-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding-bottom: 12px !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        margin-bottom: 12px !important;
+    }
+    .ul-sidebar-header-logo img {
+        height: 40px !important;
+        width: auto !important;
+        object-fit: contain !important;
+    }
+    .ul-sidebar-header-title {
+        font-size: 13.5px !important;
+        font-weight: 800 !important;
+        color: #1a1a1a !important;
+        line-height: 1.2 !important;
+        letter-spacing: 0.3px !important;
+        font-family: 'Cinzel', 'Times New Roman', serif !important;
+    }
+    .ul-sidebar-header-tag {
+        font-size: 10.5px !important;
+        color: #e02b20 !important;
+        font-weight: 600 !important;
+        margin-top: 2px !important;
+    }
+    .ul-sidebar-closer {
+        width: 34px !important;
+        height: 34px !important;
+        border-radius: 50% !important;
+        background: #f1f5f9 !important;
+        border: none !important;
+        color: #4b5563 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 15px !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+    }
+    .ul-sidebar-closer:hover {
+        background: #fee2e2 !important;
+        color: #dc2626 !important;
+        transform: rotate(90deg) !important;
+    }
+
+    /* Left-Aligned Menu List in Drawer */
+    .ul-sidebar .ul-header-nav {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        text-align: left !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        gap: 0 !important;
+    }
+    .ul-sidebar .ul-header-nav > * {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        width: 100% !important;
+        padding: 11px 12px !important;
+        line-height: normal !important;
+        font-size: 14.5px !important;
+        font-weight: 600 !important;
+        color: #1e293b !important;
+        border: none !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        background: transparent !important;
+        text-decoration: none !important;
+        box-sizing: border-box !important;
+        border-radius: 6px !important;
+        transition: background 0.15s ease, color 0.15s ease !important;
+    }
+    .ul-sidebar .ul-header-nav > *:hover {
+        background-color: #fff7f5 !important;
+        color: #e02b20 !important;
+    }
+
+    /* Submenu Parent Item */
+    .ul-sidebar .ul-header-nav .has-sub-menu {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        border: none !important;
+    }
+    .ul-sidebar .ul-header-nav .has-sub-menu > a {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        padding: 11px 12px !important;
+        line-height: normal !important;
+        font-size: 14.5px !important;
+        font-weight: 600 !important;
+        color: #1e293b !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        cursor: pointer !important;
+        text-decoration: none !important;
+        box-sizing: border-box !important;
+        border-radius: 6px !important;
+        transition: background 0.15s ease, color 0.15s ease !important;
+    }
+    .ul-sidebar .ul-header-nav .has-sub-menu > a:hover {
+        background-color: #fff7f5 !important;
+        color: #e02b20 !important;
+    }
+    .ul-sidebar .ul-header-nav .has-sub-menu > a::after {
+        display: inline-block !important;
+        content: "\f078" !important; /* fa-chevron-down */
+        font-family: 'Font Awesome 5 Free', 'FontAwesome' !important;
+        font-weight: 900 !important;
+        font-size: 11px !important;
+        color: #94a3b8 !important;
+        transition: transform 0.25s ease !important;
+        margin-left: auto !important;
+    }
+    .ul-sidebar .ul-header-nav .has-sub-menu.active > a::after {
+        transform: rotate(180deg) !important;
+        color: #e02b20 !important;
+    }
+
+    /* Submenus: Closed by default, opened when active */
+    .ul-sidebar .has-sub-menu .ul-header-submenu {
+        display: none !important;
+        position: static !important;
+        width: 100% !important;
+        background: #f8fafc !important;
+        border-radius: 8px !important;
+        padding: 4px 0 !important;
+        margin: 4px 0 6px 0 !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: none !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        transform: none !important;
+    }
+    .ul-sidebar .has-sub-menu.active .ul-header-submenu {
+        display: block !important;
+    }
+    .ul-sidebar .has-sub-menu .ul-header-submenu ul {
+        list-style: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .ul-sidebar .has-sub-menu .ul-header-submenu li a {
+        display: flex !important;
+        align-items: center !important;
+        padding: 8px 16px !important;
+        font-size: 13.5px !important;
+        font-weight: 500 !important;
+        color: #475569 !important;
+        text-decoration: none !important;
+        border-left: 3px solid transparent !important;
+        transition: all 0.2s ease !important;
+    }
+    .ul-sidebar .has-sub-menu .ul-header-submenu li a:hover {
+        color: #e02b20 !important;
+        border-left-color: #e02b20 !important;
+        background: #ffffff !important;
+        padding-left: 20px !important;
+    }
+
+    /* Footer Contacts & Socials */
+    .ul-sidebar-footer {
+        margin-top: auto !important;
+        padding-top: 14px !important;
+        border-top: 1px solid #f1f5f9 !important;
+    }
+    .sidebar-contact-item {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        font-size: 12.5px !important;
+        color: #475569 !important;
+        margin-bottom: 6px !important;
+        text-decoration: none !important;
+    }
+    .sidebar-contact-item:hover {
+        color: #e02b20 !important;
+    }
+    .sidebar-contact-item i {
+        color: #e02b20 !important;
+        width: 16px !important;
+    }
+    .ul-sidebar-footer-social {
+        display: flex !important;
+        gap: 8px !important;
+        margin-top: 10px !important;
+    }
+    .ul-sidebar-footer-social a {
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 50% !important;
+        background: #f1f5f9 !important;
+        border: none !important;
+        color: #475569 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 13px !important;
+        transition: all 0.2s ease !important;
+    }
+    .ul-sidebar-footer-social a:hover {
+        background: #e02b20 !important;
+        color: #ffffff !important;
+        transform: translateY(-2px) !important;
+    }
+</style>
+
+<!-- SIDEBAR SECTION START -->
+<div class="ul-sidebar">
+    <!-- header -->
+    <div class="ul-sidebar-header">
+        <div class="ul-sidebar-header-logo">
+            <a href="/" class="d-flex align-items-center gap-2 text-decoration-none">
+                <img src="~/assets/img/logo.png" alt="Shriram Janki Trust" class="logo" onerror="this.style.display='none'">
+                <div>
+                    <div class="ul-sidebar-header-title">SHRIRAM JANKI TRUST</div>
+                    <div class="ul-sidebar-header-tag"><i class="fa fa-map-marker-alt me-1"></i>Ayodhya Dham, UP</div>
+                </div>
+            </a>
+        </div>
+        <!-- sidebar closer -->
+        <button class="ul-sidebar-closer" aria-label="Close Navigation"><i class="fa fa-times"></i></button>
+    </div>
+
+    <!-- Multi-Language Switcher in Mobile Drawer -->
+    <div class="sidebar-lang-box p-2 mb-2 rounded bg-light border text-center">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+            <span class="small fw-bold text-dark"><i class="fa fa-language text-danger me-1"></i> भाषा / Language:</span>
+            <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-outline-danger btn-xs py-1 px-2" onclick="changeLanguage('en')">English</button>
+                <button type="button" class="btn btn-outline-danger btn-xs py-1 px-2" onclick="changeLanguage('hi')">हिन्दी</button>
+            </div>
+        </div>
+        <select class="form-select form-select-sm" onchange="changeLanguage(this.value)" style="font-size: 11px;">
+            <option value="">More Languages (अन्य भाषाएं)...</option>
+            <option value="hi">हिन्दी (Hindi)</option>
+            <option value="en">English</option>
+            <option value="sa">संस्कृतम् (Sanskrit)</option>
+            <option value="bn">বাংলা (Bengali)</option>
+            <option value="gu">ગુજરાતી (Gujarati)</option>
+            <option value="mr">मराठी (Marathi)</option>
+            <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+            <option value="ta">தமிழ் (Tamil)</option>
+            <option value="te">తెలుగు (Telugu)</option>
+            <option value="ur">اردو (Urdu)</option>
+        </select>
+    </div>
+
+    <!-- Navigation items copied here by main.js in mobile -->
+    <div class="ul-sidebar-header-nav-wrapper d-block d-lg-none my-1"></div>
+
+    <!-- sidebar footer -->
+    <div class="ul-sidebar-footer">
+        <div class="mb-2">
+            <a href="tel:+919918953452" class="sidebar-contact-item">
+                <i class="fa fa-phone"></i> +91 9918953452
+            </a>
+            <a href="tel:+919250931408" class="sidebar-contact-item">
+                <i class="fa fa-phone"></i> +91 9250931408
+            </a>
+            <a href="mailto:itdeskmindforgetechnology@gmail.com" class="sidebar-contact-item">
+                <i class="fa fa-envelope"></i> itdeskmindforgetechnology@gmail.com
+            </a>
+            <div class="small text-muted mt-2" style="font-size: 11px; line-height: 1.4;">
+                <i class="fa fa-map-marker-alt text-danger me-1"></i> Karanpur, Station Road, Babhnan, Gonda - 271313 (Near Ram Mandir, Ayodhya Dham, UP)
+            </div>
+        </div>
+        <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
+            <span class="small text-muted" style="font-size: 11px;">Follow us:</span>
+            <div class="ul-sidebar-footer-social m-0">
+                <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Drawer Overlay Backdrop -->
+<div class="ul-sidebar-backdrop" id="ulSidebarBackdrop" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:998; backdrop-filter:blur(2px); transition:opacity 0.3s ease;"></div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const sidebar = document.querySelector(".ul-sidebar");
+        const opener = document.querySelector(".ul-header-sidebar-opener");
+        const closer = document.querySelector(".ul-sidebar-closer");
+        const backdrop = document.getElementById("ulSidebarBackdrop");
+
+        function openSidebar() {
+            if (sidebar) sidebar.classList.add("active");
+            if (backdrop) backdrop.style.display = "block";
+            document.body.style.overflow = "hidden";
+            bindSubmenuToggles();
+        }
+
+        function closeSidebar() {
+            if (sidebar) sidebar.classList.remove("active");
+            if (backdrop) backdrop.style.display = "none";
+            document.body.style.overflow = "";
+        }
+
+        if (opener) opener.addEventListener("click", openSidebar);
+        if (closer) closer.addEventListener("click", closeSidebar);
+        if (backdrop) backdrop.addEventListener("click", closeSidebar);
+
+        // Accordion Submenu Toggle (Open / Close on Click)
+        function bindSubmenuToggles() {
+            const subMenuAnchors = document.querySelectorAll(".ul-sidebar .has-sub-menu > a");
+            subMenuAnchors.forEach(function (anchor) {
+                anchor.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const parent = this.closest(".has-sub-menu");
+                    if (parent) {
+                        const isOpen = parent.classList.contains("active");
+                        // Close other open submenus
+                        document.querySelectorAll(".ul-sidebar .has-sub-menu.active").forEach(function (item) {
+                            if (item !== parent) item.classList.remove("active");
+                        });
+                        if (isOpen) {
+                            parent.classList.remove("active");
+                        } else {
+                            parent.classList.add("active");
+                        }
+                    }
+                };
+            });
+        }
+
+        // Initialize on load and on resize
+        setTimeout(bindSubmenuToggles, 300);
+        window.addEventListener("resize", function () {
+            if (window.innerWidth < 992) {
+                setTimeout(bindSubmenuToggles, 200);
+            }
+        });
+    });
+</script>
+<!-- SIDEBAR SECTION END -->

@@ -1,0 +1,119 @@
+@model RamJankiNGO.Models.CampaignDto
+@{
+    ViewData["Title"] = Model.CampaignId > 0 ? "Edit Cause" : "Add Cause / Campaign";
+    Layout = "~/Areas/Admin/Views/Shared/_adminLayout.cshtml";
+}
+
+<div class="page-body">
+    <div class="container-fluid">
+        <div class="page-title">
+            <div class="row">
+                <div class="col-6">
+                    <h4>@(Model.CampaignId > 0 ? "Edit Cause / Campaign" : "Add Cause / Campaign")</h4>
+                </div>
+                <div class="col-6">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/Admin/Dashboard/Index"><i data-feather="home"></i></a></li>
+                        <li class="breadcrumb-item"><a href="/Admin/Master/CampaignList">Campaigns</a></li>
+                        <li class="breadcrumb-item active">@(Model.CampaignId > 0 ? "Edit" : "Add")</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xl-9 col-lg-11 mx-auto">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header pb-0">
+                        <h5 class="f-w-600 mb-0"><i class="fa fa-bullhorn text-info me-2"></i> Cause / Campaign Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="/Admin/Master/AddCampaign" enctype="multipart/form-data">
+                            <input type="hidden" asp-for="CampaignId" />
+                            <input type="hidden" asp-for="ImagePath" />
+
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <label class="form-label f-w-600">Campaign Title <span class="text-danger">*</span></label>
+                                    <input type="text" asp-for="Title" class="form-control" required placeholder="e.g. Free Eye Health Camp in Rural Areas" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label f-w-600">Category</label>
+                                    <select asp-for="Category" class="form-select">
+                                        <option value="Education">Education</option>
+                                        <option value="Healthcare">Healthcare</option>
+                                        <option value="Community">Community Development</option>
+                                        <option value="Food Relief">Food Relief / Annakshetra</option>
+                                        <option value="Environment">Environment & Water</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Target Goal Amount (₹)</label>
+                                    <input type="number" asp-for="TargetAmount" class="form-control" placeholder="Goal in ₹" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Amount Raised So Far (₹)</label>
+                                    <input type="number" asp-for="RaisedAmount" class="form-control" placeholder="Raised in ₹" />
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Start Date</label>
+                                    <input type="date" asp-for="StartDate" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">End Date</label>
+                                    <input type="date" asp-for="EndDate" class="form-control" />
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label f-w-600">Short Summary</label>
+                                    <input type="text" asp-for="ShortDescription" class="form-control" placeholder="1-2 line summary for card displays" />
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label f-w-600">Detailed Description & Impact</label>
+                                    <textarea asp-for="Description" class="form-control" rows="5" placeholder="Full details, mission, beneficiaries and impact goals"></textarea>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Campaign Banner / Photo</label>
+                                    <input type="file" asp-for="ImageFile" class="form-control" accept="image/*" />
+                                    @if (!string.IsNullOrEmpty(Model.ImagePath))
+                                    {
+                                        <div class="mt-2">
+                                            <img src="@Model.ImagePath" alt="Campaign Banner" style="height:70px; border-radius:6px;" />
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label f-w-600">Feature on Home Page?</label>
+                                    <div class="form-check form-switch mt-2">
+                                        <input class="form-check-input" type="checkbox" asp-for="IsFeatured" id="isFeaturedSwitch">
+                                        <label class="form-check-label" for="isFeaturedSwitch">Featured</label>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label f-w-600">Status</label>
+                                    <select asp-for="Status" class="form-select">
+                                        <option value="1">Active / Published</option>
+                                        <option value="0">Draft / Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 d-flex justify-content-end gap-2">
+                                <a href="/Admin/Master/CampaignList" class="btn btn-outline-secondary">Cancel</a>
+                                <button type="submit" class="btn btn-info text-white"><i class="fa fa-save me-1"></i> Save Campaign</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

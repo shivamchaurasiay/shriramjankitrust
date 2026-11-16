@@ -1,0 +1,256 @@
+﻿@model RamJankiNGO.Models.DashboardDto
+@using System.Data
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "~/Areas/Admin/Views/Shared/_adminLayout.cshtml";
+}
+
+<div class="page-body">
+    <div class="container-fluid">
+        <div class="page-title">
+            <div class="row">
+                <div class="col-6">
+                    <h4>NGO Overview & Performance</h4>
+                </div>
+                <div class="col-6">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/Admin/Dashboard/Index"><i data-feather="home"></i></a></li>
+                        <li class="breadcrumb-item active">Dashboard</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container-fluid starts-->
+    <div class="container-fluid">
+        <!-- KPI Summary Cards -->
+        <div class="row">
+            <div class="col-sm-6 col-xl-3 col-lg-6">
+                <div class="card o-hidden border-0 shadow-sm bg-primary">
+                    <div class="card-body">
+                        <div class="media static-top-widget">
+                            <div class="media-body">
+                                <h6 class="font-roboto text-white-50">Total Donations</h6>
+                                <h3 class="mb-0 text-white font-weight-bold">₹@Model.TotalDonationAmount.ToString("N0")</h3>
+                                <small class="text-white">@Model.TotalDonationCount confirmed donations</small>
+                            </div>
+                            <div class="align-self-center text-center"><i class="fa fa-hand-holding-heart fa-2x text-white-50"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-xl-3 col-lg-6">
+                <div class="card o-hidden border-0 shadow-sm bg-success">
+                    <div class="card-body">
+                        <div class="media static-top-widget">
+                            <div class="media-body">
+                                <h6 class="font-roboto text-white-50">This Month Collection</h6>
+                                <h3 class="mb-0 text-white font-weight-bold">₹@Model.CurrentMonthAmount.ToString("N0")</h3>
+                                <small class="text-white">@DateTime.Now.ToString("MMMM yyyy")</small>
+                            </div>
+                            <div class="align-self-center text-center"><i class="fa fa-calendar-check fa-2x text-white-50"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-xl-3 col-lg-6">
+                <div class="card o-hidden border-0 shadow-sm bg-secondary">
+                    <div class="card-body">
+                        <div class="media static-top-widget">
+                            <div class="media-body">
+                                <h6 class="font-roboto text-white-50">Total Members</h6>
+                                <h3 class="mb-0 text-white font-weight-bold">@Model.TotalMembers</h3>
+                                <small class="text-white">@Model.ActiveMembers Active Members</small>
+                            </div>
+                            <div class="align-self-center text-center"><i class="fa fa-users fa-2x text-white-50"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-xl-3 col-lg-6">
+                <div class="card o-hidden border-0 shadow-sm bg-info">
+                    <div class="card-body">
+                        <div class="media static-top-widget">
+                            <div class="media-body">
+                                <h6 class="font-roboto text-white-50">Active Causes</h6>
+                                <h3 class="mb-0 text-white font-weight-bold">@Model.ActiveCampaigns</h3>
+                                <small class="text-white">@Model.NewInquiries New Inquiries</small>
+                            </div>
+                            <div class="align-self-center text-center"><i class="fa fa-bullhorn fa-2x text-white-50"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Action Buttons -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-3">
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <span class="f-w-600 text-muted me-2"><i class="fa fa-bolt text-warning"></i> Quick Actions:</span>
+                            <a href="/Admin/Donation/AddOffline" class="btn btn-outline-danger btn-sm"><i class="fa fa-plus me-1"></i> Record Donation</a>
+                            <a href="/Admin/Member/AddEditMember" class="btn btn-outline-primary btn-sm"><i class="fa fa-user-plus me-1"></i> Add Member</a>
+                            <a href="/Admin/Member/Import" class="btn btn-outline-success btn-sm"><i class="fa fa-file-excel me-1"></i> Excel Member Import</a>
+                            <a href="/Admin/Master/AddCampaign" class="btn btn-outline-info btn-sm"><i class="fa fa-bullhorn me-1"></i> Add Cause</a>
+                            <a href="/Admin/Report/Index" class="btn btn-outline-secondary btn-sm"><i class="fa fa-chart-line me-1"></i> View Reports</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tables Row -->
+        <div class="row">
+            <!-- Recent Donations -->
+            <div class="col-xl-7 col-lg-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                        <h5 class="f-w-600 mb-0"><i class="fa fa-receipt text-danger me-2"></i> Recent Donations</h5>
+                        <a href="/Admin/Donation/Index" class="btn btn-light btn-sm text-primary">View All &rarr;</a>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Receipt No</th>
+                                        <th>Donor</th>
+                                        <th>Amount</th>
+                                        <th>Mode</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model.RecentDonations != null && Model.RecentDonations.Rows.Count > 0)
+                                    {
+                                        foreach (DataRow row in Model.RecentDonations.Rows)
+                                        {
+                                            <tr>
+                                                <td><span class="badge bg-light text-dark border">@(row["ReceiptNumber"]?.ToString() ?? row["DonationCode"].ToString())</span></td>
+                                                <td>
+                                                    <span class="f-w-600">@row["DonorName"]</span>
+                                                    <div class="f-12 text-muted">@row["DonorPhone"]</div>
+                                                </td>
+                                                <td class="f-w-600 text-success">₹@Convert.ToDecimal(row["Amount"]).ToString("N0")</td>
+                                                <td><span class="badge bg-secondary">@row["PaymentMode"]</span></td>
+                                                <td>
+                                                    @if (row["PaymentStatus"].ToString() == "Successful")
+                                                    {
+                                                        <span class="badge bg-success">Successful</span>
+                                                    }
+                                                    else if (row["PaymentStatus"].ToString() == "Pending")
+                                                    {
+                                                        <span class="badge bg-warning text-dark">Pending</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-danger">@row["PaymentStatus"]</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <a href="/Admin/Donation/Receipt/@row["DonationId"]" class="btn btn-xs btn-outline-primary" title="View Receipt">
+                                                        <i class="fa fa-print"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted py-3">No donation records found.</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campaign Progress -->
+            <div class="col-xl-5 col-lg-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                        <h5 class="f-w-600 mb-0"><i class="fa fa-chart-pie text-info me-2"></i> Causes & Campaigns</h5>
+                        <a href="/Admin/Master/CampaignList" class="btn btn-light btn-sm text-primary">Manage &rarr;</a>
+                    </div>
+                    <div class="card-body p-3">
+                        @if (Model.CampaignSummary != null && Model.CampaignSummary.Rows.Count > 0)
+                        {
+                            foreach (DataRow camp in Model.CampaignSummary.Rows)
+                            {
+                                decimal target = Convert.ToDecimal(camp["TargetAmount"]);
+                                decimal raised = Convert.ToDecimal(camp["RaisedAmount"]);
+                                int percent = target > 0 ? (int)Math.Min(100, (raised / target) * 100) : 0;
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="f-w-600 text-truncate" style="max-width: 200px;">@camp["Title"]</span>
+                                        <span class="f-w-600 text-primary">₹@raised.ToString("N0") / ₹@target.ToString("N0") (@percent%)</span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: @percent%;" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-4">No active campaigns available.</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Recent Registered Members -->
+                <div class="card shadow-sm border-0 mt-3">
+                    <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                        <h5 class="f-w-600 mb-0"><i class="fa fa-user-check text-success me-2"></i> Recent Members</h5>
+                        <a href="/Admin/Member/Index" class="btn btn-light btn-sm text-primary">View All &rarr;</a>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Name</th>
+                                        <th>Mobile</th>
+                                        <th>Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model.RecentMembers != null && Model.RecentMembers.Rows.Count > 0)
+                                    {
+                                        foreach (DataRow mem in Model.RecentMembers.Rows)
+                                        {
+                                            <tr>
+                                                <td><span class="badge bg-light text-primary">@mem["MemberCode"]</span></td>
+                                                <td class="f-w-600">@mem["FullName"]</td>
+                                                <td>@mem["Mobile"]</td>
+                                                <td><span class="badge bg-secondary">@mem["MemberType"]</span></td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-2">No members registered yet.</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Container-fluid Ends-->
+</div>

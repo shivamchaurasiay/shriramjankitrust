@@ -1,0 +1,124 @@
+@model System.Data.DataTable
+@using System.Data
+@{
+    ViewData["Title"] = "Campaigns List";
+    Layout = "~/Areas/Admin/Views/Shared/_adminLayout.cshtml";
+}
+
+<div class="page-body">
+    <div class="container-fluid">
+        <div class="page-title">
+            <div class="row">
+                <div class="col-6">
+                    <h4>Causes & Campaigns</h4>
+                </div>
+                <div class="col-6">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/Admin/Dashboard/Index"><i data-feather="home"></i></a></li>
+                        <li class="breadcrumb-item">Content</li>
+                        <li class="breadcrumb-item active">Campaigns</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                        <h5 class="f-w-600 mb-0"><i class="fa fa-bullhorn text-info me-2"></i> All Causes & Campaigns (@Model.Rows.Count)</h5>
+                        <a href="/Admin/Master/AddCampaign" class="btn btn-primary btn-sm"><i class="fa fa-plus me-1"></i> Add New Cause</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Image</th>
+                                        <th>Title & Category</th>
+                                        <th>Target Goal</th>
+                                        <th>Raised Amount</th>
+                                        <th>Progress</th>
+                                        <th>Featured</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model != null && Model.Rows.Count > 0)
+                                    {
+                                        foreach (DataRow row in Model.Rows)
+                                        {
+                                            decimal target = Convert.ToDecimal(row["TargetAmount"]);
+                                            decimal raised = Convert.ToDecimal(row["RaisedAmount"]);
+                                            int pct = target > 0 ? (int)Math.Min(100, (raised / target) * 100) : 0;
+                                            string imgPath = row["ImagePath"]?.ToString() ?? "/assets/img/causes-img-1.jpg";
+
+                                            <tr>
+                                                <td style="width: 80px;">
+                                                    <img src="@imgPath" alt="" style="width: 70px; height: 50px; object-fit: cover; border-radius: 4px;" />
+                                                </td>
+                                                <td>
+                                                    <div class="f-w-600">@row["Title"]</div>
+                                                    <span class="badge bg-light text-dark border">@row["Category"]</span>
+                                                </td>
+                                                <td>₹@target.ToString("N0")</td>
+                                                <td class="f-w-600 text-success">₹@raised.ToString("N0")</td>
+                                                <td style="min-width: 140px;">
+                                                    <div class="d-flex justify-content-between f-12 mb-1">
+                                                        <span>@pct%</span>
+                                                    </div>
+                                                    <div class="progress" style="height: 6px;">
+                                                        <div class="progress-bar bg-success" style="width: @pct%;"></div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    @if (Convert.ToBoolean(row["IsFeatured"]))
+                                                    {
+                                                        <span class="badge bg-warning text-dark"><i class="fa fa-star me-1"></i> Featured</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted f-12">Standard</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (Convert.ToInt32(row["Status"]) == 1)
+                                                    {
+                                                        <span class="badge bg-success">Active</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-secondary">Inactive</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a href="/Admin/Master/AddCampaign/@row["CampaignId"]" class="btn btn-outline-primary" title="Edit">
+                                                            <i class="fa fa-edit"></i>
+                                                        </a>
+                                                        <a href="/Admin/Master/DeleteCampaign/@row["CampaignId"]" class="btn btn-outline-danger" title="Delete" onclick="return confirm('Delete this campaign?');">
+                                                            <i class="fa fa-trash"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td colspan="8" class="text-center text-muted py-4">No campaigns found.</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

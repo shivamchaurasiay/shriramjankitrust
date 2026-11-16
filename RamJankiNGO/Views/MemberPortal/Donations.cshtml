@@ -1,0 +1,113 @@
+@model System.Data.DataTable
+@using System.Data
+@{
+    ViewData["Title"] = "My Donations & Tax Receipts";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="ul-breadcrumb">
+    <div class="ul-container container">
+        <h2 class="ul-breadcrumb-title">My Donations</h2>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/MemberPortal/Dashboard">Member Portal</a></li>
+            <li>Donations &amp; Receipts</li>
+        </ul>
+    </div>
+</div>
+
+<section class="ul-section-spacing" style="background: #faf8f5;">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">My Seva Contributions &amp; Receipts</h3>
+                <p class="text-muted small mb-0">Track all your contributions and download official 80G tax-exempt donation receipts.</p>
+            </div>
+            <div>
+                <a href="/Home/Donation" class="btn btn-danger btn-sm px-3 py-2 fw-bold shadow-sm">
+                    <i class="flaticon-heart me-1"></i> Make a New Donation
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 rounded-4 overflow-hidden bg-white">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Receipt No</th>
+                            <th>Donation Code</th>
+                            <th>Cause / Campaign</th>
+                            <th>Amount</th>
+                            <th>Payment Mode</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th class="text-end pe-4">80G Receipt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Rows.Count > 0)
+                        {
+                            foreach (DataRow row in Model.Rows)
+                            {
+                                int donId = Convert.ToInt32(row["DonationId"]);
+                                string receiptNo = row["ReceiptNumber"]?.ToString() ?? "-";
+                                string status = row["PaymentStatus"]?.ToString() ?? "Successful";
+                                decimal amount = Convert.ToDecimal(row["Amount"]);
+                                string campTitle = row["CampaignTitle"]?.ToString() ?? "General Seva Fund";
+                                string mode = row["PaymentMode"]?.ToString() ?? "Online";
+                                DateTime dt = row["CreatedAt"] != DBNull.Value ? Convert.ToDateTime(row["CreatedAt"]) : DateTime.Now;
+
+                                <tr>
+                                    <td class="ps-4 font-monospace fw-bold text-danger">@receiptNo</td>
+                                    <td class="font-monospace small text-muted">@row["DonationCode"]</td>
+                                    <td class="fw-semibold">@campTitle</td>
+                                    <td class="fw-bold text-success fs-6">₹@amount.ToString("N0")</td>
+                                    <td><span class="badge bg-light text-dark border">@mode</span></td>
+                                    <td>
+                                        @if (status == "Successful")
+                                        {
+                                            <span class="badge bg-success">Successful</span>
+                                        }
+                                        else if (status == "Pending")
+                                        {
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@status</span>
+                                        }
+                                    </td>
+                                    <td class="small text-muted">@dt.ToString("dd MMM yyyy, HH:mm")</td>
+                                    <td class="text-end pe-4">
+                                        @if (status == "Successful")
+                                        {
+                                            <a href="/MemberPortal/Receipt/@donId" target="_blank" class="btn btn-outline-danger btn-sm fw-bold">
+                                                <i class="fa fa-print me-1"></i> View Receipt
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">-</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    <i class="fa fa-receipt fa-3x text-muted mb-3 d-block opacity-50"></i>
+                                    <h5>No Donations Recorded Yet</h5>
+                                    <p class="small mb-3">You haven't made any donations under this member profile yet.</p>
+                                    <a href="/Home/Donation" class="btn btn-danger btn-sm px-4 fw-bold">Make Your First Contribution</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>

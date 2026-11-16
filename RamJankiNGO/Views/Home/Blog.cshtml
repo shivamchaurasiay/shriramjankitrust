@@ -1,0 +1,86 @@
+@using System.Data
+@model DataTable
+@{
+    ViewData["Title"] = "News & Articles";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<main>
+    <!-- BREADCRUMBS SECTION START -->
+    <section class="ul-breadcrumb ul-section-spacing">
+        <div class="ul-container">
+            <h2 class="ul-breadcrumb-title">News &amp; Blogs</h2>
+            <ul class="ul-breadcrumb-nav">
+                <li><a href="/">Home</a></li>
+                <li><span class="separator"><i class="flaticon-right"></i></span></li>
+                <li>Latest Articles</li>
+            </ul>
+        </div>
+    </section>
+    <!-- BREADCRUMBS SECTION END -->
+
+    <!-- BLOG SECTION START -->
+    <section class="ul-blogs-2 ul-section-spacing">
+        <div class="ul-container">
+            <div class="ul-section-heading">
+                <div class="left">
+                    <span class="ul-section-sub-title">From Our Mission Field</span>
+                    <h2 class="ul-section-title">Stories of Impact, Seva &amp; Transformation</h2>
+                </div>
+                <a href="/Home/Donation" class="ul-btn"><i class="flaticon-fast-forward-double-right-arrows-symbol"></i> Donate For Seva</a>
+            </div>
+
+            <div class="row row-cols-lg-3 row-cols-md-2 row-cols-1 g-4 justify-content-center">
+                @if (Model != null && Model.Rows.Count > 0)
+                {
+                    foreach (DataRow blog in Model.Rows)
+                    {
+                        int blogId = Convert.ToInt32(blog["BlogId"]);
+                        string bImg = !string.IsNullOrEmpty(blog["ImagePath"]?.ToString()) ? blog["ImagePath"].ToString()! : "/assets/img/blog-1.jpg";
+                        string bTitle = blog["Title"]?.ToString() ?? "";
+                        string bCat = blog["Category"]?.ToString() ?? "News";
+                        string bAuthor = blog["Author"]?.ToString() ?? "Trust Administration";
+                        string shortDesc = blog["ShortDescription"]?.ToString() ?? "";
+                        DateTime dtCreated = blog["CreatedAt"] != DBNull.Value ? Convert.ToDateTime(blog["CreatedAt"]) : DateTime.Now;
+
+                        <div class="col">
+                            <div class="ul-blog ul-blog-2 h-100 rounded-4 overflow-hidden shadow-sm d-flex flex-column" style="background:#fff; border: 1px solid #f0e6dd;">
+                                <div class="ul-blog-img position-relative" style="height: 230px; overflow: hidden;">
+                                    <img src="@Url.Content(bImg)" alt="@bTitle" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <div class="date position-absolute top-0 end-0 m-3 px-3 py-1 rounded text-center text-white" style="background: #e85a2a;">
+                                        <span class="number d-block fw-bold" style="font-size: 1.15rem; line-height: 1;">@dtCreated.Day</span>
+                                        <span class="txt d-block small text-uppercase" style="font-size: 0.72rem;">@dtCreated.ToString("MMM")</span>
+                                    </div>
+                                    <span class="badge position-absolute bottom-0 start-0 m-3 px-3 py-1 rounded-pill text-white" style="background: rgba(0,0,0,0.65);">
+                                        @bCat
+                                    </span>
+                                </div>
+                                <div class="ul-blog-txt p-4 d-flex flex-column flex-grow-1">
+                                    <div class="ul-blog-infos mb-2 d-flex gap-3 small text-muted">
+                                        <div class="ul-blog-info">
+                                            <span class="icon"><i class="flaticon-account"></i></span>
+                                            <span>@bAuthor</span>
+                                        </div>
+                                    </div>
+                                    <h4 class="ul-blog-title mb-2" style="font-size: 1.15rem; line-height: 1.4;">
+                                        <a href="/Home/BlogDetails/@blogId" class="text-dark text-decoration-none">@bTitle</a>
+                                    </h4>
+                                    <p class="text-muted small flex-grow-1 mb-4" style="line-height: 1.6;">
+                                        @shortDesc
+                                    </p>
+                                    <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center">
+                                        <a href="/Home/BlogDetails/@blogId" class="ul-blog-btn text-decoration-none fw-semibold" style="color: #e85a2a;">
+                                            Read Article <span class="icon"><i class="flaticon-next"></i></span>
+                                        </a>
+                                        <small class="text-muted"><i class="fa fa-calendar-alt me-1"></i>@dtCreated.ToString("dd MMM yyyy")</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </section>
+    <!-- BLOG SECTION END -->
+</main>

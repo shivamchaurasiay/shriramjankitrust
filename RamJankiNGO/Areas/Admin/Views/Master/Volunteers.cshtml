@@ -1,0 +1,83 @@
+@model System.Data.DataTable
+@using System.Data
+@{
+    ViewData["Title"] = "Volunteer Registrations";
+    Layout = "~/Areas/Admin/Views/Shared/_adminLayout.cshtml";
+}
+
+<div class="page-body">
+    <div class="container-fluid">
+        <div class="page-title">
+            <div class="row">
+                <div class="col-6">
+                    <h4>Volunteer Applications</h4>
+                </div>
+                <div class="col-6">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/Admin/Dashboard/Index"><i data-feather="home"></i></a></li>
+                        <li class="breadcrumb-item">Volunteers</li>
+                        <li class="breadcrumb-item active">List</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header pb-0">
+                        <h5 class="f-w-600 mb-0"><i class="fa fa-hands-helping text-warning me-2"></i> Volunteer Applications (@Model.Rows.Count)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Volunteer Name</th>
+                                        <th>Contact Details</th>
+                                        <th>Occupation / Area of Interest</th>
+                                        <th>Address</th>
+                                        <th>Notes</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model != null && Model.Rows.Count > 0)
+                                    {
+                                        foreach (DataRow row in Model.Rows)
+                                        {
+                                            <tr>
+                                                <td style="width: 130px;">@Convert.ToDateTime(row["CreatedAt"]).ToString("dd/MM/yyyy")</td>
+                                                <td class="f-w-600">@row["Name"]</td>
+                                                <td>
+                                                    <div><i class="fa fa-phone me-1 text-muted"></i>@row["Phone"]</div>
+                                                    <div><i class="fa fa-envelope me-1 text-muted"></i>@row["Email"]</div>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-light text-dark border">@row["AreaOfInterest"]</span>
+                                                    <div class="small text-muted">@row["Occupation"]</div>
+                                                </td>
+                                                <td>@row["Address"]</td>
+                                                <td>@row["Message"]</td>
+                                                <td><span class="badge bg-warning text-dark">@row["Status"]</span></td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-4">No volunteer registrations submitted yet.</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

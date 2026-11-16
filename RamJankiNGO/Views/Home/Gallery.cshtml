@@ -1,0 +1,106 @@
+@model System.Data.DataTable
+@using System.Data
+@{
+    ViewData["Title"] = "Photo Gallery - Shriram Janki Trust";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var albums = ViewBag.Albums as DataTable;
+}
+
+<section class="ul-breadcrumb ul-section-spacing">
+    <div class="ul-container">
+        <h2 class="ul-breadcrumb-title">Photo Gallery</h2>
+        <ul class="ul-breadcrumb-nav">
+            <li><a href="/">Home</a></li>
+            <li><span class="separator"><i class="flaticon-right"></i></span></li>
+            <li>Gallery</li>
+        </ul>
+    </div>
+</section>
+
+<section class="ul-section-spacing" style="background: #faf8f5;">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="badge bg-danger px-3 py-2 fs-6 rounded-pill text-white mb-2">Our Seva in Pictures</span>
+            <h2 class="fw-bold text-dark">Visual Highlights of Sacred Seva &amp; Welfare</h2>
+            <p class="text-muted mx-auto" style="max-width: 650px;">Explore glimpses of our daily bhandara, rural health outreach camps, educational kit distributions, and welfare initiatives.</p>
+
+            <!-- Album Filter Buttons -->
+            <div class="d-flex flex-wrap justify-content-center gap-2 mt-4" id="galleryFilterButtons">
+                <button type="button" class="btn btn-danger btn-sm px-3 py-2 rounded-pill fw-semibold filter-btn active" data-filter="all">
+                    All Photos
+                </button>
+                @if (albums != null && albums.Rows.Count > 0)
+                {
+                    foreach (DataRow alb in albums.Rows)
+                    {
+                        string albName = alb["GalleryName"]?.ToString() ?? "";
+                        int albId = Convert.ToInt32(alb["GalleryId"]);
+                        <button type="button" class="btn btn-outline-danger btn-sm px-3 py-2 rounded-pill fw-semibold filter-btn" data-filter="alb-@albId">
+                            @albName
+                        </button>
+                    }
+                }
+            </div>
+        </div>
+
+        <!-- Gallery Grid -->
+        <div class="row g-4" id="galleryGrid">
+            @if (Model != null && Model.Rows.Count > 0)
+            {
+                foreach (DataRow row in Model.Rows)
+                {
+                    string img = row["ImagePath"]?.ToString() ?? "/assets/img/project-1.jpg";
+                    int albId = row.Table.Columns.Contains("GalleryId") && row["GalleryId"] != DBNull.Value ? Convert.ToInt32(row["GalleryId"]) : 0;
+                    string albumName = row.Table.Columns.Contains("GalleryName") && row["GalleryName"] != DBNull.Value ? row["GalleryName"].ToString()! : "Seva Activity";
+                    string title = row.Table.Columns.Contains("ImageTitle") && row["ImageTitle"] != DBNull.Value ? row["ImageTitle"].ToString()! : "Social Welfare Moment";
+
+                    <div class="col-lg-4 col-md-6 gallery-card alb-@albId">
+                        <div class="card shadow-sm border-0 rounded-4 overflow-hidden h-100 transition" style="background: #fff;">
+                            <div class="position-relative overflow-hidden" style="height: 260px;">
+                                <img src="@Url.Content(img)" class="w-100 h-100" alt="@title" style="object-fit: cover; transition: transform 0.4s ease;" onerror="this.src='/assets/img/project-1.jpg'" />
+                                <span class="badge position-absolute top-0 start-0 m-3 px-3 py-2 rounded-pill text-white shadow-sm" style="background: #e85a2a; font-weight: 600; font-size: 0.78rem;">
+                                    @albumName
+                                </span>
+                            </div>
+                            <div class="card-body p-3 text-center">
+                                <h6 class="fw-bold text-dark mb-0" style="font-size: 1rem; line-height: 1.4;">@title</h6>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12 text-center py-5">
+                    <p class="text-muted">No gallery photos found.</p>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.classList.remove('active', 'btn-danger');
+                    b.classList.add('btn-outline-danger');
+                });
+                this.classList.add('active', 'btn-danger');
+                this.classList.remove('btn-outline-danger');
+
+                const filter = this.getAttribute('data-filter');
+                const cards = document.querySelectorAll('.gallery-card');
+
+                cards.forEach(card => {
+                    if (filter === 'all' || card.classList.contains(filter)) {
+                        card.style.display = '';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+}

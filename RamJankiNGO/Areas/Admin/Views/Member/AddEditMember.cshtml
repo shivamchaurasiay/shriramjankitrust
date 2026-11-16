@@ -1,0 +1,271 @@
+@model RamJankiNGO.Models.MemberDto
+@{
+    ViewData["Title"] = Model.MemberId > 0 ? "Edit Member" : "Add Member";
+    Layout = "~/Areas/Admin/Views/Shared/_adminLayout.cshtml";
+}
+
+<div class="page-body">
+    <div class="container-fluid">
+        <div class="page-title">
+            <div class="row">
+                <div class="col-6">
+                    <h4>@(Model.MemberId > 0 ? "Edit Member Details" : "Register New Member")</h4>
+                </div>
+                <div class="col-6">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/Admin/Dashboard/Index"><i data-feather="home"></i></a></li>
+                        <li class="breadcrumb-item"><a href="/Admin/Member/Index">Members</a></li>
+                        <li class="breadcrumb-item active">@(Model.MemberId > 0 ? "Edit" : "Add")</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xl-9 col-lg-11 mx-auto">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header pb-0">
+                        <h5 class="f-w-600 mb-0"><i class="fa fa-user-edit text-primary me-2"></i> Member Profile Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="/Admin/Member/AddEditMember" enctype="multipart/form-data">
+                            <input type="hidden" asp-for="MemberId" />
+                            <input type="hidden" asp-for="ProfilePhoto" />
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Member Code (Optional - Auto generated if blank)</label>
+                                    <input type="text" asp-for="MemberCode" class="form-control" placeholder="e.g. MEM101" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Full Name <span class="text-danger">*</span></label>
+                                    <input type="text" asp-for="FullName" class="form-control" required placeholder="Full Name" />
+                                    <span asp-validation-for="FullName" class="text-danger"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Mobile Number <span class="text-danger">*</span></label>
+                                    <input type="text" asp-for="Mobile" class="form-control" required placeholder="10-digit mobile number" />
+                                    <span asp-validation-for="Mobile" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Email Address</label>
+                                    <input type="email" asp-for="Email" class="form-control" placeholder="donor@example.com" />
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Member Category</label>
+                                    <select asp-for="MemberType" class="form-select">
+                                        <option value="Regular">Regular Member</option>
+                                        <option value="Life">Life Member</option>
+                                        <option value="Patron">Patron Member</option>
+                                        <option value="Volunteer">Volunteer</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Date of Birth</label>
+                                    <input type="date" asp-for="DateOfBirth" class="form-control" />
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label f-w-600">Street Address</label>
+                                    <input type="text" asp-for="Address" class="form-control" placeholder="House/Flat No, Landmark, Road" />
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label f-w-600">State (राज्य) <span class="text-danger">*</span></label>
+                                    <select asp-for="State" id="adminStateSelect" class="form-select" onchange="populateAdminCities()" required>
+                                        <option value="">-- Select State --</option>
+                                        <option value="Uttar Pradesh">Uttar Pradesh (उत्तर प्रदेश)</option>
+                                        <option value="Bihar">Bihar (बिहार)</option>
+                                        <option value="Madhya Pradesh">Madhya Pradesh (मध्य प्रदेश)</option>
+                                        <option value="Delhi">Delhi (दिल्ली)</option>
+                                        <option value="Rajasthan">Rajasthan (राजस्थान)</option>
+                                        <option value="Haryana">Haryana (हरियाणा)</option>
+                                        <option value="Uttarakhand">Uttarakhand (उत्तराखंड)</option>
+                                        <option value="Maharashtra">Maharashtra (महाराष्ट्र)</option>
+                                        <option value="Gujarat">Gujarat (गुजरात)</option>
+                                        <option value="West Bengal">West Bengal (पश्चिम बंगाल)</option>
+                                        <option value="Punjab">Punjab (पंजाब)</option>
+                                        <option value="Jharkhand">Jharkhand (झारखंड)</option>
+                                        <option value="Chhattisgarh">Chhattisgarh (छत्तीसगढ़)</option>
+                                        <option value="Other">Other State</option>
+                                    </select>
+                                    <span asp-validation-for="State" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label f-w-600">City / District (शहर / जिला) <span class="text-danger">*</span></label>
+                                    <select asp-for="City" id="adminCitySelect" class="form-select" required>
+                                        <option value="">-- Select City / District --</option>
+                                    </select>
+                                    <span asp-validation-for="City" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label f-w-600">PIN Code (पिन कोड)</label>
+                                    <input type="text" asp-for="PinCode" class="form-control" placeholder="6-digit PIN Code" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,6)" />
+                                    <span asp-validation-for="PinCode" class="text-danger"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Profile Photo</label>
+                                    <input type="file" asp-for="PhotoFile" class="form-control" accept="image/*" />
+                                    @if (!string.IsNullOrEmpty(Model.ProfilePhoto))
+                                    {
+                                        <div class="mt-2">
+                                            <img src="@Model.ProfilePhoto" alt="Profile" style="height:60px; border-radius:6px;" />
+                                        </div>
+                                    }
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label f-w-600">Status</label>
+                                    <select asp-for="Status" class="form-select">
+                                        <option value="1">Active</option>
+                                        <option value="0">Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 d-flex justify-content-end gap-2">
+                                <a href="/Admin/Member/Index" class="btn btn-outline-secondary">Cancel</a>
+                                <button type="submit" class="btn btn-primary"><i class="fa fa-save me-1"></i> Save Member</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const stateCityData = {
+            "Uttar Pradesh": [
+                "Ayodhya", "Lucknow", "Varanasi", "Prayagraj", "Kanpur", "Gonda", "Basti", "Balrampur", "Bahraich",
+                "Barabanki", "Gorakhpur", "Sultanpur", "Ambedkar Nagar", "Amethi", "Raebareli", "Sitapur", "Hardoi",
+                "Lakhimpur Kheri", "Unnao", "Fatehpur", "Pratapgarh", "Kaushambi", "Agra", "Mathura", "Aligarh",
+                "Bareilly", "Moradabad", "Meerut", "Ghaziabad", "Gautam Buddha Nagar (Noida)", "Jhansi", "Jaunpur",
+                "Mirzapur", "Azamgarh", "Mau", "Ballia", "Ghazipur", "Deoria", "Kushinagar", "Maharajganj",
+                "Sant Kabir Nagar", "Siddharthnagar", "Chandauli", "Bhadohi", "Sonbhadra", "Banda", "Chitrakoot",
+                "Hamirpur", "Mahoba", "Jalaun", "Lalitpur", "Shahjahanpur", "Pilibhit", "Budaun", "Sambhal", "Rampur",
+                "Bijnor", "Amroha", "Saharanpur", "Muzaffarnagar", "Shamli", "Baghpat", "Bulandshahr", "Hapur",
+                "Hathras", "Kasganj", "Etah", "Mainpuri", "Firozabad", "Farrukhabad", "Kannauj", "Etawah", "Auraiya"
+            ],
+            "Bihar": [
+                "Patna", "Gaya", "Muzaffarpur", "Bhagalpur", "Darbhanga", "Purnia", "Begusarai", "Samastipur",
+                "Madhubani", "Saran (Chhapra)", "Siwan", "Gopalganj", "Vaishali", "Nalanda", "Rohtas", "Buxar",
+                "Bhojpur (Ara)", "Munger", "Khagaria", "Saharsa", "Katihar", "Kishanganj", "Araria", "West Champaran",
+                "East Champaran", "Sitamarhi", "Sheohar", "Aurangabad", "Jehanabad", "Arwal", "Nawada", "Jamui", "Banka"
+            ],
+            "Madhya Pradesh": [
+                "Bhopal", "Indore", "Gwalior", "Jabalpur", "Ujjain", "Rewa", "Satna", "Sagar", "Chhatarpur",
+                "Damoh", "Katni", "Singrauli", "Sidhi", "Hoshangabad", "Ratlam", "Dewas", "Khandwa", "Khargone"
+            ],
+            "Delhi": [
+                "Central Delhi", "New Delhi", "North Delhi", "South Delhi", "East Delhi", "West Delhi",
+                "North East Delhi", "North West Delhi", "South East Delhi", "South West Delhi", "Shahdara"
+            ],
+            "Rajasthan": [
+                "Jaipur", "Jodhpur", "Udaipur", "Kota", "Bikaner", "Ajmer", "Alwar", "Bhilwara", "Sikar",
+                "Bharatpur", "Pali", "Sri Ganganagar", "Chittorgarh", "Jhunjhunu", "Barmer", "Nagaur"
+            ],
+            "Haryana": [
+                "Gurugram", "Faridabad", "Panipat", "Ambala", "Karnal", "Rohtak", "Hisar", "Sonipat", "Panchkula", "Yamunanagar"
+            ],
+            "Uttarakhand": [
+                "Dehradun", "Haridwar", "Nainital", "Rishikesh", "Roorkee", "Haldwani", "Udham Singh Nagar", "Almora", "Pauri Garhwal"
+            ],
+            "Maharashtra": [
+                "Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Aurangabad", "Solapur", "Kolhapur", "Amravati", "Navi Mumbai"
+            ],
+            "Gujarat": [
+                "Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar", "Gandhinagar", "Junagadh", "Anand"
+            ],
+            "West Bengal": [
+                "Kolkata", "Howrah", "Durgapur", "Asansol", "Siliguri", "Bardhaman", "Kharagpur", "Malda", "Darjeeling"
+            ],
+            "Punjab": [
+                "Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda", "Mohali", "Hoshiarpur", "Pathankot"
+            ],
+            "Jharkhand": [
+                "Ranchi", "Jamshedpur", "Dhanbad", "Bokaro", "Deoghar", "Hazaribagh", "Giridih", "Ramgarh"
+            ],
+            "Chhattisgarh": [
+                "Raipur", "Bhilai", "Bilaspur", "Korba", "Rajnandgaon", "Durg", "Raigarh", "Jagdalpur"
+            ],
+            "Other": [
+                "Other City"
+            ]
+        };
+
+        function populateAdminCities(preselectedCity) {
+            const stateSelect = document.getElementById('adminStateSelect');
+            const citySelect = document.getElementById('adminCitySelect');
+            if (!stateSelect || !citySelect) return;
+
+            const state = stateSelect.value;
+            const targetCity = preselectedCity || citySelect.value || '@(Model?.City ?? "")';
+
+            citySelect.innerHTML = '<option value="">-- Select City / District --</option>';
+
+            if (state && stateCityData[state]) {
+                let foundMatch = false;
+                stateCityData[state].forEach(city => {
+                    const opt = document.createElement('option');
+                    opt.value = city;
+                    opt.text = city;
+                    if (city.toLowerCase() === (targetCity || '').toLowerCase()) {
+                        opt.selected = true;
+                        foundMatch = true;
+                    }
+                    citySelect.appendChild(opt);
+                });
+
+                // If existing city from DB is not in the predefined list, append and select it
+                if (!foundMatch && targetCity && targetCity.trim() !== '') {
+                    const customOpt = document.createElement('option');
+                    customOpt.value = targetCity;
+                    customOpt.text = targetCity;
+                    customOpt.selected = true;
+                    citySelect.appendChild(customOpt);
+                }
+            } else if (state) {
+                const opt = document.createElement('option');
+                opt.value = targetCity || "Other City";
+                opt.text = targetCity || "Other City";
+                opt.selected = true;
+                citySelect.appendChild(opt);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const initialCity = '@(Model?.City ?? "")';
+            const initialState = '@(Model?.State ?? "")';
+            const stateSelect = document.getElementById('adminStateSelect');
+
+            if (stateSelect && initialState) {
+                // Check if initial state is in dropdown
+                let stateFound = false;
+                for (let i = 0; i < stateSelect.options.length; i++) {
+                    if (stateSelect.options[i].value.toLowerCase() === initialState.toLowerCase()) {
+                        stateSelect.selectedIndex = i;
+                        stateFound = true;
+                        break;
+                    }
+                }
+                if (!stateFound && initialState.trim() !== '') {
+                    const newOpt = document.createElement('option');
+                    newOpt.value = initialState;
+                    newOpt.text = initialState;
+                    newOpt.selected = true;
+                    stateSelect.appendChild(newOpt);
+                }
+            }
+
+            populateAdminCities(initialCity);
+        });
+    </script>
+}

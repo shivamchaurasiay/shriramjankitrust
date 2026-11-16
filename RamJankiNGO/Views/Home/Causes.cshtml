@@ -1,0 +1,88 @@
+@model System.Data.DataTable
+@using System.Data
+@{
+    ViewData["Title"] = "Our Causes & Projects - Shriram Janki Trust";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<main>
+    <!-- BREADCRUMBS SECTION START -->
+    <section class="ul-breadcrumb ul-section-spacing">
+        <div class="ul-container">
+            <h2 class="ul-breadcrumb-title">Our Seva Programs & Causes</h2>
+            <ul class="ul-breadcrumb-nav">
+                <li><a href="/">Home</a></li>
+                <li><span class="separator"><i class="flaticon-right"></i></span></li>
+                <li>Causes</li>
+            </ul>
+        </div>
+    </section>
+    <!-- BREADCRUMBS SECTION END -->
+
+    <!-- DONATIONS SECTION START -->
+    <section class="ul-section-spacing overflow-hidden">
+        <div class="ul-container wow animate__fadeInUp">
+            <div class="row ul-bs-row row-cols-xl-4 row-cols-md-3 row-cols-2 row-cols-xxs-1 g-4">
+                @if (Model != null && Model.Rows.Count > 0)
+                {
+                    foreach (DataRow row in Model.Rows)
+                    {
+                        decimal target = Convert.ToDecimal(row["TargetAmount"]);
+                        decimal raised = Convert.ToDecimal(row["RaisedAmount"]);
+                        int pct = target > 0 ? (int)Math.Min(100, (raised / target) * 100) : 0;
+                        string img = row["ImagePath"]?.ToString() ?? "/assets/img/donation-1.jpg";
+                        int campId = Convert.ToInt32(row["CampaignId"]);
+                        string category = row["Category"]?.ToString() ?? "Seva";
+                        string title = row["Title"]?.ToString() ?? "";
+                        string descr = row["ShortDescription"]?.ToString() ?? "";
+
+                        <div class="col">
+                            <div class="ul-donation ul-donation--inner h-100 d-flex flex-column justify-content-between">
+                                <div>
+                                    <div class="ul-donation-img">
+                                        <img src="@img" alt="@title" style="height: 220px; width: 100%; object-fit: cover;" onerror="this.src='/assets/img/donation-1.jpg'">
+                                        <span class="tag">@category</span>
+                                    </div>
+                                    <div class="ul-donation-txt">
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-end mb-1">
+                                                <span class="fw-bold small" style="color: #e85a2a;">@pct%</span>
+                                            </div>
+                                            <div class="progress" style="height: 6px; background-color: #fbeee8; border-radius: 4px; overflow: hidden;">
+                                                <div class="progress-bar" role="progressbar" style="width: @pct%; background-color: #e85a2a; transition: width 0.6s ease;" aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom small">
+                                            <div>
+                                                <span class="text-muted">Raised :</span>
+                                                <span class="fw-bold text-dark">&#8377;@raised.ToString("N0")</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-muted">Goal :</span>
+                                                <span class="fw-bold text-dark">&#8377;@target.ToString("N0")</span>
+                                            </div>
+                                        </div>
+                                        <a href="/Home/Donation?campaignId=@campId" class="ul-donation-title">@title</a>
+                                        <p class="ul-donation-descr">@descr</p>
+                                    </div>
+                                </div>
+                                <div class="px-3 pb-3">
+                                    <a href="/Home/Donation?campaignId=@campId" class="ul-donation-btn w-100 text-center">
+                                        Donate now <i class="flaticon-up-right-arrow"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-12 text-center text-muted py-5">
+                        <h4>No active causes found.</h4>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+    <!-- DONATIONS SECTION END -->
+</main>

@@ -1,0 +1,422 @@
+@model RamJankiNGO.Models.RegisterDto
+@{
+    ViewData["Title"] = "Member Registration - Shri Ram Janki Trust";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="ul-breadcrumb">
+    <div class="ul-container container">
+        <h2 class="ul-breadcrumb-title">Member Registration</h2>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/MemberPortal/Login">Member Portal</a></li>
+            <li>New Registration</li>
+        </ul>
+    </div>
+</div>
+
+<section class="ul-section-spacing" style="background: linear-gradient(135deg, #fff8f0 0%, #fff 100%);">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-7 col-md-10">
+                <div class="card shadow-lg border-0 p-4 p-md-5 rounded-4">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <span class="badge bg-success text-white px-3 py-2 fs-6 rounded-pill">
+                                <i class="fa fa-user-plus me-1"></i> New Membership
+                            </span>
+                        </div>
+                        <h3 class="fw-bold text-dark mb-1">श्रीराम जानकी मंदिर सेवा ट्रस्ट</h3>
+                        <h5 class="text-secondary fw-semibold">Join As Trust Member / नया सदस्य पंजीकरण</h5>
+                        <p class="text-muted small">Register to get your official Member ID (e.g. <code>SJT-MEM-001</code>), access your lifetime donation history, and download tax-exempt receipts.</p>
+                    </div>
+
+                    @* Tab navigation for quick switch between Login and Register *@
+                    <ul class="nav nav-pills nav-fill mb-4 bg-light p-1 rounded-3">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark fw-bold rounded-3 py-2" href="/MemberPortal/Login">
+                                <i class="fa fa-sign-in-alt me-1 text-danger"></i> Sign In
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active fw-bold bg-danger text-white rounded-3 py-2" href="/MemberPortal/Register">
+                                <i class="fa fa-user-plus me-1"></i> Register
+                            </a>
+                        </li>
+                    </ul>
+
+                    @if (ViewBag.ErrorMessage != null)
+                    {
+                        <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3">
+                            <i class="fa fa-exclamation-triangle me-1"></i> @ViewBag.ErrorMessage
+                        </div>
+                    }
+
+                    <form method="post" action="/MemberPortal/Register" autocomplete="off" id="memberRegisterForm">
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold small text-secondary">Full Name (पूरा नाम) <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted"><i class="fa fa-user"></i></span>
+                                    <input type="text" asp-for="FullName" id="regFullName" autocomplete="off" class="form-control form-control-lg fs-6" required placeholder="Enter Full Name" />
+                                </div>
+                                <span asp-validation-for="FullName" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-secondary">Mobile Number (मोबाइल नंबर) <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted"><i class="fa fa-phone"></i></span>
+                                    <input type="tel" asp-for="Mobile" id="regMobile" autocomplete="off" maxlength="10" class="form-control form-control-lg fs-6" required placeholder="10-digit mobile number" oninput="validateMobileRealtime(this)" />
+                                </div>
+                                <div id="mobileFeedback" class="small mt-1" style="display:none;"></div>
+                                <span asp-validation-for="Mobile" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-secondary">Email Address (ईमेल)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted"><i class="fa fa-envelope"></i></span>
+                                    <input type="email" asp-for="Email" id="regEmail" autocomplete="off" class="form-control form-control-lg fs-6" placeholder="Enter Email Address" oninput="validateEmailRealtime(this)" />
+                                </div>
+                                <div id="emailFeedback" class="small mt-1" style="display:none;"></div>
+                                <span asp-validation-for="Email" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-secondary">Create Password (पासवर्ड) <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted"><i class="fa fa-lock"></i></span>
+                                    <input type="password" asp-for="Password" id="regPassword" autocomplete="new-password" class="form-control form-control-lg fs-6" required placeholder="Min 8 chars, 1 Upper, 1 Number, 1 Special" oninput="validatePasswordRealtime(this)" />
+                                </div>
+                                <div id="passwordFeedback" class="small mt-1 p-2 bg-light rounded border" style="display:none;">
+                                    <div class="fw-bold mb-1" style="font-size:11px;">Password Requirements:</div>
+                                    <div id="ruleLength" class="text-danger" style="font-size:11px;"><i class="fa fa-times-circle me-1"></i> At least 8 characters</div>
+                                    <div id="ruleUpper" class="text-danger" style="font-size:11px;"><i class="fa fa-times-circle me-1"></i> At least 1 uppercase letter (A-Z)</div>
+                                    <div id="ruleLower" class="text-danger" style="font-size:11px;"><i class="fa fa-times-circle me-1"></i> At least 1 lowercase letter (a-z)</div>
+                                    <div id="ruleNumber" class="text-danger" style="font-size:11px;"><i class="fa fa-times-circle me-1"></i> At least 1 numeric digit (0-9)</div>
+                                    <div id="ruleSpecial" class="text-danger" style="font-size:11px;"><i class="fa fa-times-circle me-1"></i> At least 1 special character (@@$!%*?&#)</div>
+                                </div>
+                                <span asp-validation-for="Password" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-secondary">Confirm Password (पुष्टि करें) <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted"><i class="fa fa-check-double"></i></span>
+                                    <input type="password" asp-for="ConfirmPassword" id="regConfirmPassword" autocomplete="new-password" class="form-control form-control-lg fs-6" required placeholder="Re-enter password" oninput="validateConfirmPassword(this)" />
+                                </div>
+                                <div id="confirmFeedback" class="small mt-1" style="display:none;"></div>
+                                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                            </div>
+
+                            @* State Dropdown *@
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-secondary">State (राज्य) <span class="text-danger">*</span></label>
+                                <select asp-for="State" id="stateSelect" class="form-select form-select-lg fs-6" required onchange="populateCities()">
+                                    <option value="">-- Select State --</option>
+                                    <option value="Uttar Pradesh" selected>Uttar Pradesh (उत्तर प्रदेश)</option>
+                                    <option value="Bihar">Bihar (बिहार)</option>
+                                    <option value="Madhya Pradesh">Madhya Pradesh (मध्य प्रदेश)</option>
+                                    <option value="Delhi">Delhi (दिल्ली)</option>
+                                    <option value="Rajasthan">Rajasthan (राजस्थान)</option>
+                                    <option value="Haryana">Haryana (हरियाणा)</option>
+                                    <option value="Uttarakhand">Uttarakhand (उत्तराखंड)</option>
+                                    <option value="Maharashtra">Maharashtra (महाराष्ट्र)</option>
+                                    <option value="Gujarat">Gujarat (गुजरात)</option>
+                                    <option value="West Bengal">West Bengal (पश्चिम बंगाल)</option>
+                                    <option value="Punjab">Punjab (पंजाब)</option>
+                                    <option value="Jharkhand">Jharkhand (झारखंड)</option>
+                                    <option value="Chhattisgarh">Chhattisgarh (छत्तीसगढ़)</option>
+                                    <option value="Other">Other State</option>
+                                </select>
+                                <span asp-validation-for="State" class="text-danger small"></span>
+                            </div>
+
+                            @* Dynamic Cascading City Dropdown *@
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-secondary">City / District (शहर / जिला) <span class="text-danger">*</span></label>
+                                <select asp-for="City" id="citySelect" class="form-select form-select-lg fs-6" required>
+                                    <option value="">-- Select City / District --</option>
+                                </select>
+                                <span asp-validation-for="City" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-8">
+                                <label class="form-label fw-bold small text-secondary">Address (पता)</label>
+                                <input type="text" asp-for="Address" class="form-control fs-6" placeholder="House/Village, Street, Landmark" />
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-secondary">PIN Code (पिन कोड)</label>
+                                <input type="text" asp-for="PinCode" maxlength="6" class="form-control fs-6" placeholder="Enter 6-digit PIN Code" />
+                            </div>
+                        </div>
+
+                        <div class="alert alert-light border small text-muted mt-3 py-2">
+                            <i class="fa fa-info-circle text-danger me-1"></i>
+                            <strong>Note:</strong> Agar aapne pehle bina login ke bhi daan (donation) kiya hai, to same Mobile Number aur Email enter karne par aapka purana sara donation data automatically aapke account se link ho jayega.
+                        </div>
+
+                        <button type="submit" class="btn btn-danger btn-lg w-100 fw-bold shadow-sm py-2 mt-2">
+                            <i class="fa fa-user-plus me-1"></i> Register as Member / सदस्यता पंजीकरण पूर्ण करें
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-4 border-top pt-3">
+                        <p class="text-muted small mb-0">Already registered as a member?
+                            <a href="/MemberPortal/Login" class="text-danger fw-bold ms-1">Sign In to Your Account &rarr;</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        const stateCityData = {
+            "Uttar Pradesh": [
+                "Gonda", "Ayodhya", "Basti", "Balrampur", "Bahraich", "Barabanki", "Lucknow", "Gorakhpur",
+                "Varanasi", "Prayagraj", "Kanpur", "Sultanpur", "Ambedkar Nagar", "Amethi", "Raebareli",
+                "Sitapur", "Hardoi", "Lakhimpur Kheri", "Unnao", "Fatehpur", "Pratapgarh", "Kaushambi",
+                "Agra", "Mathura", "Aligarh", "Bareilly", "Moradabad", "Meerut", "Ghaziabad", "Gautam Buddha Nagar (Noida)",
+                "Jhansi", "Jaunpur", "Mirzapur", "Azamgarh", "Mau", "Ballia", "Ghazipur", "Deoria", "Kushinagar",
+                "Maharajganj", "Sant Kabir Nagar", "Siddharthnagar", "Chandauli", "Bhadohi", "Sonbhadra", "Banda",
+                "Chitrakoot", "Hamirpur", "Mahoba", "Jalaun", "Lalitpur", "Shahjahanpur", "Pilibhit", "Budaun",
+                "Sambhal", "Rampur", "Bijnor", "Amroha", "Saharanpur", "Muzaffarnagar", "Shamli", "Baghpat",
+                "Bulandshahr", "Hapur", "Hathras", "Kasganj", "Etah", "Mainpuri", "Firozabad", "Farrukhabad",
+                "Kannauj", "Etawah", "Auraiya"
+            ],
+            "Bihar": [
+                "Patna", "Gaya", "Muzaffarpur", "Bhagalpur", "Darbhanga", "Purnia", "Begusarai", "Samastipur",
+                "Madhubani", "Saran (Chhapra)", "Siwan", "Gopalganj", "Vaishali", "Nalanda", "Rohtas", "Buxar",
+                "Bhojpur (Ara)", "Munger", "Khagaria", "Saharsa", "Katihar", "Kishanganj", "Araria", "West Champaran",
+                "East Champaran", "Sitamarhi", "Sheohar", "Aurangabad", "Jehanabad", "Arwal", "Nawada", "Jamui", "Banka"
+            ],
+            "Madhya Pradesh": [
+                "Bhopal", "Indore", "Gwalior", "Jabalpur", "Ujjain", "Rewa", "Satna", "Sagar", "Chhatarpur",
+                "Damoh", "Katni", "Singrauli", "Sidhi", "Hoshangabad", "Ratlam", "Dewas", "Khandwa", "Khargone"
+            ],
+            "Delhi": [
+                "Central Delhi", "New Delhi", "North Delhi", "South Delhi", "East Delhi", "West Delhi",
+                "North East Delhi", "North West Delhi", "South East Delhi", "South West Delhi", "Shahdara"
+            ],
+            "Rajasthan": [
+                "Jaipur", "Jodhpur", "Udaipur", "Kota", "Bikaner", "Ajmer", "Alwar", "Bhilwara", "Sikar",
+                "Bharatpur", "Pali", "Sri Ganganagar", "Chittorgarh", "Jhunjhunu", "Barmer", "Nagaur"
+            ],
+            "Haryana": [
+                "Gurugram", "Faridabad", "Panipat", "Ambala", "Karnal", "Rohtak", "Hisar", "Sonipat", "Panchkula", "Yamunanagar"
+            ],
+            "Uttarakhand": [
+                "Dehradun", "Haridwar", "Nainital", "Rishikesh", "Roorkee", "Haldwani", "Udham Singh Nagar", "Almora", "Pauri Garhwal"
+            ],
+            "Maharashtra": [
+                "Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Aurangabad", "Solapur", "Kolhapur", "Amravati", "Navi Mumbai"
+            ],
+            "Gujarat": [
+                "Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar", "Gandhinagar", "Junagadh", "Anand"
+            ],
+            "West Bengal": [
+                "Kolkata", "Howrah", "Durgapur", "Asansol", "Siliguri", "Bardhaman", "Kharagpur", "Malda", "Darjeeling"
+            ],
+            "Punjab": [
+                "Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda", "Mohali", "Hoshiarpur", "Pathankot"
+            ],
+            "Jharkhand": [
+                "Ranchi", "Jamshedpur", "Dhanbad", "Bokaro", "Deoghar", "Hazaribagh", "Giridih", "Ramgarh"
+            ],
+            "Chhattisgarh": [
+                "Raipur", "Bhilai", "Bilaspur", "Korba", "Rajnandgaon", "Durg", "Raigarh", "Jagdalpur"
+            ],
+            "Other": [
+                "Other City"
+            ]
+        };
+
+        function populateCities() {
+            const state = document.getElementById('stateSelect').value;
+            const citySelect = document.getElementById('citySelect');
+            const selectedCity = '@(Model?.City ?? "")';
+
+            citySelect.innerHTML = '<option value="">-- Select City / District --</option>';
+
+            if (state && stateCityData[state]) {
+                stateCityData[state].forEach(city => {
+                    const opt = document.createElement('option');
+                    opt.value = city;
+                    opt.text = city;
+                    if (city === selectedCity) {
+                        opt.selected = true;
+                    }
+                    citySelect.appendChild(opt);
+                });
+            } else if (state) {
+                const opt = document.createElement('option');
+                opt.value = "Other City";
+                opt.text = "Other City";
+                citySelect.appendChild(opt);
+            }
+        }
+
+        // Real-time mobile validation
+        function validateMobileRealtime(input) {
+            input.value = input.value.replace(/[^0-9]/g, '').slice(0, 10);
+            const feedback = document.getElementById('mobileFeedback');
+            if (!feedback) return;
+            const val = input.value;
+            if (val.length === 0) {
+                feedback.style.display = 'none';
+                return;
+            }
+            feedback.style.display = 'block';
+            if (val.length === 10 && /^[6-9]/.test(val)) {
+                feedback.className = 'small mt-1 text-success';
+                feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Valid 10-digit Mobile Number';
+            } else if (val.length > 0 && !/^[6-9]/.test(val)) {
+                feedback.className = 'small mt-1 text-danger';
+                feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Mobile number must start with 6, 7, 8, or 9';
+            } else {
+                feedback.className = 'small mt-1 text-warning';
+                feedback.innerHTML = '<i class="fa fa-info-circle me-1"></i> Enter ' + (10 - val.length) + ' more digit(s)';
+            }
+        }
+
+        // Real-time email validation
+        function validateEmailRealtime(input) {
+            const feedback = document.getElementById('emailFeedback');
+            if (!feedback) return;
+            const val = input.value.trim();
+            if (val.length === 0) {
+                feedback.style.display = 'none';
+                return;
+            }
+            feedback.style.display = 'block';
+            const emailRegex = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+            if (emailRegex.test(val)) {
+                feedback.className = 'small mt-1 text-success';
+                feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Valid Email Address';
+            } else {
+                feedback.className = 'small mt-1 text-danger';
+                feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Please enter a valid email format (e.g. name@domain.com)';
+            }
+        }
+
+        // Real-time password validation
+        function validatePasswordRealtime(input) {
+            const container = document.getElementById('passwordFeedback');
+            if (!container) return;
+            const val = input.value;
+            if (val.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            container.style.display = 'block';
+
+            const hasLen = val.length >= 8;
+            const hasUpper = /[A-Z]/.test(val);
+            const hasLower = /[a-z]/.test(val);
+            const hasNum = /\d/.test(val);
+            const hasSpecial = /[@@$!%*?&#^()_+\-=\[\]{}|;:,.<>\/]/.test(val);
+
+            updateRule('ruleLength', hasLen, 'At least 8 characters');
+            updateRule('ruleUpper', hasUpper, 'At least 1 uppercase letter (A-Z)');
+            updateRule('ruleLower', hasLower, 'At least 1 lowercase letter (a-z)');
+            updateRule('ruleNumber', hasNum, 'At least 1 numeric digit (0-9)');
+            updateRule('ruleSpecial', hasSpecial, 'At least 1 special character (@@, #, $, etc.)');
+
+            validateConfirmPassword(document.getElementById('regConfirmPassword'));
+        }
+
+        function updateRule(elementId, isValid, text) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            if (isValid) {
+                el.className = 'text-success';
+                el.innerHTML = '<i class="fa fa-check-circle me-1"></i> ' + text;
+            } else {
+                el.className = 'text-danger';
+                el.innerHTML = '<i class="fa fa-times-circle me-1"></i> ' + text;
+            }
+        }
+
+        // Confirm password check
+        function validateConfirmPassword(input) {
+            const feedback = document.getElementById('confirmFeedback');
+            if (!feedback || !input) return;
+            const pass = document.getElementById('regPassword').value;
+            const confirmVal = input.value;
+            if (confirmVal.length === 0) {
+                feedback.style.display = 'none';
+                return;
+            }
+            feedback.style.display = 'block';
+            if (pass === confirmVal && pass.length >= 8) {
+                feedback.className = 'small mt-1 text-success';
+                feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Passwords match perfectly';
+            } else {
+                feedback.className = 'small mt-1 text-danger';
+                feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Passwords do not match';
+            }
+        }
+
+        // Form submit guard
+        document.getElementById('memberRegisterForm')?.addEventListener('submit', function (e) {
+            const mobile = document.getElementById('regMobile').value;
+            if (!/^[6-9]\d{9}$/.test(mobile)) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Mobile Number',
+                    text: 'Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.',
+                    confirmButtonColor: '#e02b20'
+                });
+                return;
+            }
+
+            const email = document.getElementById('regEmail').value.trim();
+            if (email.length > 0 && !/^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(email)) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Email Address',
+                    text: 'Please enter a valid email address (e.g. name@domain.com).',
+                    confirmButtonColor: '#e02b20'
+                });
+                return;
+            }
+
+            const pass = document.getElementById('regPassword').value;
+            const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@@$!%*?&#^()_+\-=\[\]{}|;:,.<>\/]).{8,}$/;
+            if (!strongRegex.test(pass)) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Password Too Weak',
+                    text: 'Password must be at least 8 characters long and contain at least one uppercase letter (A-Z), one lowercase letter (a-z), one numeric digit (0-9), and one special character (e.g. @@, #, $, !).',
+                    confirmButtonColor: '#e02b20'
+                });
+                return;
+            }
+
+            const confirmPass = document.getElementById('regConfirmPassword').value;
+            if (pass !== confirmPass) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Passwords Do Not Match',
+                    text: 'Password and Confirm Password do not match. Please re-enter.',
+                    confirmButtonColor: '#e02b20'
+                });
+                return;
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener("DOMContentLoaded", function () {
+            populateCities();
+        });
+    </script>
+}

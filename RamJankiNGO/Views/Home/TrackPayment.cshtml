@@ -1,0 +1,199 @@
+@{
+    ViewData["Title"] = "Track & Verify Donation Payment - रसीद सत्यापन";
+    var settings = ViewBag.Settings as System.Data.DataTable;
+    string helplinePhone = "+91 9918953452, +91 9250931408";
+    string helplineEmail = "itdeskmindforgetechnology@gmail.com";
+    if (settings != null && settings.Rows.Count > 0)
+    {
+        foreach (System.Data.DataRow r in settings.Rows)
+        {
+            if (r["SettingKey"]?.ToString() == "ContactPhone") helplinePhone = r["SettingValue"]?.ToString() ?? helplinePhone;
+            if (r["SettingKey"]?.ToString() == "ContactEmail") helplineEmail = r["SettingValue"]?.ToString() ?? helplineEmail;
+        }
+    }
+}
+
+<!-- BREADCRUMB SECTION START -->
+<section class="ul-breadcrumb" style="background-color: #2b1f1a; padding: 50px 0 35px 0;">
+    <div class="ul-container text-center">
+        <h2 class="ul-breadcrumb-title text-white fw-bold mb-2">Track &amp; Verify Payment</h2>
+        <p class="text-white-50 mb-0">पैसे कट गए लेकिन नेटवर्क की वजह से रसीद नहीं मिली? यहाँ तुरंत सत्यापित करें।</p>
+    </div>
+</section>
+<!-- BREADCRUMB SECTION END -->
+
+<section class="py-5" style="background-color: #f8fafc; min-height: 60vh;">
+    <div class="container" style="max-width: 760px;">
+
+        <!-- Helpful Alert Card -->
+        <div class="alert alert-warning border-warning shadow-sm rounded-3 mb-4 d-flex align-items-start gap-3 p-3">
+            <i class="fa fa-info-circle fs-3 text-warning mt-1"></i>
+            <div>
+                <strong class="d-block text-dark mb-1">नेटवर्क समस्या के कारण भुगतान अटका है? (Network Interrupted?)</strong>
+                <p class="mb-0 text-muted small">
+                    यदि दान करते समय नेटवर्क फेल हो गया और आपके बैंक खाते/UPI से पैसे कट गए हैं, तो कृपया बिल्कुल चिंता न करें। आपका पैसा सुरक्षित है। अपने बैंक SMS या UPI ऐप से <strong>Payment ID (उदा. pay_XXXXXXXX)</strong> या अपना <strong>मोबाइल नंबर</strong> दर्ज करके अपनी आधिकारिक 80G रसीद तुरंत खोजें या डाउनलोड करें।
+                </p>
+            </div>
+        </div>
+
+        <!-- Verification Form Card -->
+        <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+            <div class="card-header bg-white border-bottom p-4">
+                <h4 class="mb-0 fw-bold text-dark"><i class="fa fa-search text-danger me-2"></i>भुगतान सत्यापन एवं रसीद खोज (Find Receipt)</h4>
+            </div>
+            <div class="card-body p-4">
+                <form id="trackPaymentForm" onsubmit="handlePaymentRecovery(event)">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">Razorpay Payment ID (यदि उपलब्ध हो):</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fa fa-receipt text-danger"></i></span>
+                            <input type="text" class="form-control" id="trackPaymentId" placeholder="उदा. pay_Qwert123456789" autocomplete="off" />
+                        </div>
+                        <small class="text-muted">बैंक के SMS या Google Pay / PhonePe / Paytm के transaction details में pay_ से शुरू होने वाली ID</small>
+                    </div>
+
+                    <div class="text-center my-2 text-muted fw-bold">--- अथवा (OR) ---</div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark">पंजीकृत मोबाइल नंबर (Registered Mobile):</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fa fa-phone text-danger"></i></span>
+                            <input type="tel" class="form-control" id="trackPhone" placeholder="उदा. 9876543210" maxlength="10" autocomplete="off" />
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100 py-3 fw-bold rounded-pill shadow-sm" id="trackSubmitBtn">
+                        <i class="fa fa-check-circle me-2"></i>Verify &amp; Retrieve Receipt / रसीद प्राप्त करें
+                    </button>
+                </form>
+
+                <!-- Loading Spinner -->
+                <div id="trackLoading" class="text-center py-4" style="display: none;">
+                    <div class="spinner-border text-danger" role="status"></div>
+                    <p class="text-muted small mt-2 mb-0">सत्यापन किया जा रहा है, कृपया प्रतीक्षा करें...</p>
+                </div>
+
+                <!-- Results Container -->
+                <div id="trackResultContainer" class="mt-4" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Helpline Card -->
+        <div class="card bg-white border rounded-3 p-3 text-center">
+            <p class="text-muted small mb-1">यदि बैंक से पैसे कटने के बाद भी रसीद नहीं मिल पा रही हो, तो ट्रस्ट हेल्पलाइन पर संपर्क करें:</p>
+            <div class="d-flex justify-content-center gap-4 flex-wrap mt-2">
+                <a href="tel:@helplinePhone" class="text-decoration-none fw-bold text-dark">
+                    <i class="fa fa-phone text-danger me-1"></i> @helplinePhone
+                </a>
+                <a href="mailto:@helplineEmail" class="text-decoration-none fw-bold text-dark">
+                    <i class="fa fa-envelope text-danger me-1"></i> @helplineEmail
+                </a>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<script>
+    function handlePaymentRecovery(e) {
+        e.preventDefault();
+        const payId = document.getElementById('trackPaymentId').value.trim();
+        const phone = document.getElementById('trackPhone').value.trim();
+
+        if (!payId && !phone) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'विवरण आवश्यक है',
+                text: 'कृपया Razorpay Payment ID (pay_...) या अपना 10 अंकों का मोबाइल नंबर दर्ज करें।',
+                confirmButtonColor: '#e03e2d'
+            });
+            return;
+        }
+
+        const btn = document.getElementById('trackSubmitBtn');
+        const loading = document.getElementById('trackLoading');
+        const resultBox = document.getElementById('trackResultContainer');
+
+        btn.disabled = true;
+        loading.style.display = 'block';
+        resultBox.style.display = 'none';
+        resultBox.innerHTML = '';
+
+        fetch('/Home/RecoverPayment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ razorpayPaymentId: payId, phone: phone })
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            loading.style.display = 'none';
+
+            if (data.success && data.found) {
+                resultBox.style.display = 'block';
+                if (data.redirectUrl) {
+                    // Single donation found by Payment ID
+                    resultBox.innerHTML = `
+                        <div class="alert alert-success border-success rounded-3 p-3">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                <h5 class="fw-bold text-success mb-0"><i class="fa fa-check-circle me-1"></i> भुगतान सत्यापित! (Verified)</h5>
+                                <span class="badge bg-success">रसीद संख्या: ${data.receiptNumber}</span>
+                            </div>
+                            <p class="mb-1 text-dark">दानदाता: <strong>${data.donorName || 'Donor'}</strong> | राशि: <strong>₹${Number(data.amount).toLocaleString('en-IN')}</strong></p>
+                            <p class="mb-3 text-muted small">दिनांक: ${data.date || ''}</p>
+                            <a href="${data.redirectUrl}" class="btn btn-success fw-bold px-4 py-2 rounded-pill">
+                                <i class="fa fa-file-invoice me-1"></i> 80G टैक्स रसीद देखें / डाउनलोड करें &rarr;
+                            </a>
+                        </div>
+                    `;
+                } else if (data.results && data.results.length > 0) {
+                    // Multiple donations found by Phone
+                    let html = `<h5 class="fw-bold text-dark mb-3">आपके मोबाइल से जुड़े दान विवरण (${data.results.length}):</h5>`;
+                    data.results.forEach(don => {
+                        html += `
+                            <div class="card border rounded-3 p-3 mb-2 shadow-sm bg-white">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    <div>
+                                        <div class="fw-bold text-dark">₹${Number(don.amount).toLocaleString('en-IN')} - ${don.donorName}</div>
+                                        <div class="small text-muted">रसीद सं.: <strong class="text-danger">${don.receiptNumber || 'Pending'}</strong> | ${don.date}</div>
+                                    </div>
+                                    <a href="${don.redirectUrl}" class="btn btn-outline-danger btn-sm fw-bold px-3">
+                                        <i class="fa fa-receipt me-1"></i> रसीद देखें
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    resultBox.innerHTML = html;
+                }
+            } else {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'रिकॉर्ड नहीं मिला',
+                    text: data.message || 'दर्ज किए गए विवरण से कोई पुष्टि प्राप्त नहीं हुई। यदि खाते से पैसे कट चुके हैं, तो कृपया सहायता हेल्पलाइन पर संपर्क करें।',
+                    confirmButtonColor: '#e03e2d'
+                });
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            loading.style.display = 'none';
+            Swal.fire({
+                icon: 'error',
+                title: 'सर्वर त्रुटि',
+                text: 'सत्यापन के दौरान तकनीकी समस्या आई। कृपया कुछ क्षण बाद पुनः प्रयास करें।',
+                confirmButtonColor: '#e03e2d'
+            });
+        });
+    }
+
+    // Auto-fill from URL query param if present (?ref=pay_xxx)
+    document.addEventListener('DOMContentLoaded', function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref');
+        if (ref) {
+            document.getElementById('trackPaymentId').value = ref;
+            handlePaymentRecovery(new Event('submit'));
+        }
+    });
+</script>

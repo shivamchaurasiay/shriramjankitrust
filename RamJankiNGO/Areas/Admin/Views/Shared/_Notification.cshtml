@@ -1,0 +1,46 @@
+﻿@{
+    var successMessage = TempData["SuccessMessage"];
+    var errorMessage = TempData["ErrorMessage"];
+}
+ 
+<html lang="en">
+<head>
+    <link href="~/adminassets/notification/notificationstyle.css" rel="stylesheet" />
+    <script src="~/adminassets/notification/notificationp.js"></script>
+</head>
+<body>
+     <div class="notification-container" id="notification" style="display:@(successMessage != null || errorMessage != null ? "block" : "none")">
+        @if (successMessage != null)
+        {
+            <div class="notification-card success">
+                <span class="close-btn" onclick="closePopup()">×</span>
+                <p>@successMessage</p>
+            </div>
+        }
+        else if (errorMessage != null)
+        {
+            <div class="notification-card error">
+                <span class="close-btn" onclick="closePopup()">×</span>
+                <p>@errorMessage</p>
+            </div>
+        }
+    </div>  
+    <script> 
+        function openPopup() {
+            document.body.classList.add('no-scroll');
+        } 
+        function closePopup() {
+            document.body.classList.remove('no-scroll');
+            var notification = document.getElementById('notification');
+            notification.style.display = 'none'; 
+        } 
+        window.addEventListener('scroll', function () {
+            var notification = document.getElementById('notification');
+            if (notification.style.display === 'block') {
+                closePopup(); 
+            }
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,185 @@
+@model System.Data.DataTable
+@using System.Data
+@{
+    ViewData["Title"] = "All Donations";
+    Layout = "~/Areas/Admin/Views/Shared/_adminLayout.cshtml";
+    var filter = ViewBag.Filter as RamJankiNGO.Models.DonationReportFilterDto ?? new RamJankiNGO.Models.DonationReportFilterDto();
+    var campaigns = ViewBag.Campaigns as DataTable;
+}
+
+<div class="page-body">
+    <div class="container-fluid">
+        <div class="page-title">
+            <div class="row">
+                <div class="col-6">
+                    <h4>Donations & Transactions</h4>
+                </div>
+                <div class="col-6">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/Admin/Dashboard/Index"><i data-feather="home"></i></a></li>
+                        <li class="breadcrumb-item">Donations</li>
+                        <li class="breadcrumb-item active">Transactions</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header pb-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <h5 class="f-w-600 mb-0"><i class="fa fa-receipt text-danger me-2"></i> All Donations (@Model.Rows.Count)</h5>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="/Admin/Donation/AddOffline" class="btn btn-danger btn-sm"><i class="fa fa-plus me-1"></i> Record Offline Donation</a>
+                            <a href="/Admin/Donation/ExportToExcel?@Context.Request.QueryString" class="btn btn-outline-secondary btn-sm"><i class="fa fa-download me-1"></i> Export Excel</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Filters -->
+                        <form method="get" action="/Admin/Donation/Index" class="row g-2 mb-4 bg-light p-3 rounded">
+                            <div class="col-md-3">
+                                <label class="form-label f-12 text-muted mb-1">Search Donor / Code</label>
+                                <input type="text" name="Search" class="form-control form-control-sm" placeholder="Name, Phone, Receipt No..." value="@filter.Search">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label f-12 text-muted mb-1">Payment Status</label>
+                                <select name="PaymentStatus" class="form-select form-select-sm">
+                                    <option value="">All Statuses</option>
+                                    <option value="Successful" selected="@(filter.PaymentStatus == "Successful")">Successful</option>
+                                    <option value="Pending" selected="@(filter.PaymentStatus == "Pending")">Pending</option>
+                                    <option value="Refunded" selected="@(filter.PaymentStatus == "Refunded")">Refunded</option>
+                                    <option value="Failed" selected="@(filter.PaymentStatus == "Failed")">Failed</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label f-12 text-muted mb-1">Campaign</label>
+                                <select name="CampaignId" class="form-select form-select-sm">
+                                    <option value="">All Campaigns</option>
+                                    @if (campaigns != null)
+                                    {
+                                        foreach (DataRow camp in campaigns.Rows)
+                                        {
+                                            <option value="@camp["CampaignId"]" selected="@(filter.CampaignId == Convert.ToInt32(camp["CampaignId"]))">@camp["Title"]</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label f-12 text-muted mb-1">From Date</label>
+                                <input type="date" name="StartDate" class="form-control form-control-sm" value="@(filter.StartDate?.ToString("yyyy-MM-dd"))">
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end gap-1">
+                                <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fa fa-filter"></i> Filter</button>
+                                <a href="/Admin/Donation/Index" class="btn btn-outline-secondary btn-sm"><i class="fa fa-undo"></i></a>
+                            </div>
+                        </form>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Receipt No</th>
+                                        <th>Code</th>
+                                        <th>Donor Details</th>
+                                        <th>Cause / Campaign</th>
+                                        <th>Amount</th>
+                                        <th>Mode</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model != null && Model.Rows.Count > 0)
+                                    {
+                                        foreach (DataRow row in Model.Rows)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    @if (row["ReceiptNumber"] != DBNull.Value && !string.IsNullOrEmpty(row["ReceiptNumber"].ToString()))
+                                                    {
+                                                        <span class="badge bg-success text-white">@row["ReceiptNumber"]</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted f-12">-</span>
+                                                    }
+                                                </td>
+                                                <td><span class="badge bg-light text-dark border">@row["DonationCode"]</span></td>
+                                                <td>
+                                                    <div class="f-w-600">@row["DonorName"]</div>
+                                                    <div class="f-12 text-muted"><i class="fa fa-phone me-1"></i>@row["DonorPhone"]</div>
+                                                </td>
+                                                <td>@(row["CampaignTitle"] != DBNull.Value ? row["CampaignTitle"].ToString() : "General Fund")</td>
+                                                <td class="f-w-600 text-success">₹@Convert.ToDecimal(row["Amount"]).ToString("N0")</td>
+                                                <td><span class="badge bg-secondary">@row["PaymentMode"]</span></td>
+                                                <td>
+                                                    @if (row["PaymentStatus"].ToString() == "Successful")
+                                                    {
+                                                        <span class="badge bg-success">Successful</span>
+                                                    }
+                                                    else if (row["PaymentStatus"].ToString() == "Pending")
+                                                    {
+                                                        <span class="badge bg-warning text-dark">Pending</span>
+                                                    }
+                                                    else if (row["PaymentStatus"].ToString() == "Refunded")
+                                                    {
+                                                        <span class="badge bg-danger">Refunded</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-dark">@row["PaymentStatus"]</span>
+                                                    }
+                                                </td>
+                                                <td>@Convert.ToDateTime(row["CreatedAt"]).ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a href="/Admin/Donation/Receipt/@row["DonationId"]" class="btn btn-outline-primary" title="View Receipt">
+                                                            <i class="fa fa-print"></i>
+                                                        </a>
+                                                        @if (row["PaymentStatus"].ToString() == "Successful")
+                                                        {
+                                                            <button type="button" class="btn btn-outline-danger" title="Refund" onclick="promptRefund(@row["DonationId"])">
+                                                                <i class="fa fa-undo"></i>
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td colspan="9" class="text-center text-muted py-4">No donation records found for the selected criteria.</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="refundForm" method="post" action="/Admin/Donation/Refund" style="display:none;">
+    <input type="hidden" name="donationId" id="refundDonationId" />
+    <input type="hidden" name="reason" id="refundReason" />
+</form>
+
+@section Scripts {
+<script>
+    function promptRefund(id) {
+        var reason = prompt("Enter mandatory reason for refunding this donation:");
+        if (reason && reason.trim() !== "") {
+            document.getElementById("refundDonationId").value = id;
+            document.getElementById("refundReason").value = reason.trim();
+            document.getElementById("refundForm").submit();
+        }
+    }
+</script>
+}

@@ -1,0 +1,237 @@
+﻿@model RamJankiNGO.Models.Contactusdto
+@{
+    ViewData["Title"] = "Contact Us - Shriram Janki Trust";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var settings = ViewBag.Settings as RamJankiNGO.Models.SettingsDto ?? new RamJankiNGO.Models.SettingsDto();
+}
+
+<main>
+    <!-- BREADCRUMBS SECTION START -->
+    <section class="ul-breadcrumb ul-section-spacing">
+        <div class="ul-container">
+            <h2 class="ul-breadcrumb-title">Contact Us</h2>
+            <ul class="ul-breadcrumb-nav">
+                <li><a href="/">Home</a></li>
+                <li><span class="separator"><i class="flaticon-right"></i></span></li>
+                <li>Contact Us</li>
+            </ul>
+        </div>
+    </section>
+    <!-- BREADCRUMBS SECTION END -->
+
+    <!-- CONTACT INFOS SECTION START -->
+    <div class="ul-contact-infos">
+        <div class="ul-section-spacing ul-container">
+            <div class="row row-cols-md-3 row-cols-2 row-cols-xxs-1 ul-bs-row">
+                <!-- single info -->
+                <div class="col">
+                    <div class="ul-contact-info">
+                        <div class="icon"><i class="flaticon-phone-call"></i></div>
+                        <div class="txt">
+                            <span class="title">Phone Number</span>
+                            <a href="tel:@settings.OrgPhone">@settings.OrgPhone</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- single info -->
+                <div class="col">
+                    <div class="ul-contact-info">
+                        <div class="icon"><i class="flaticon-comment"></i></div>
+                        <div class="txt">
+                            <span class="title">Email Address</span>
+                            <a href="mailto:@settings.OrgEmail">@settings.OrgEmail</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- single info -->
+                <div class="col">
+                    <div class="ul-contact-info">
+                        <div class="icon"><i class="flaticon-location"></i></div>
+                        <div class="txt">
+                            <span class="title">Office Address</span>
+                            <span class="descr">@settings.OrgAddress</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- CONTACT INFOS SECTION END -->
+
+    <!-- CONTACT SECTION START -->
+    <section class="ul-inner-contact ul-section-spacing">
+        <div class="ul-section-heading justify-content-center text-center">
+            <div>
+                <span class="ul-section-sub-title">Contact Us</span>
+                <h2 class="ul-section-title">Feel Free To Write Us Anytime</h2>
+            </div>
+        </div>
+
+        <div class="ul-inner-contact-container">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success py-3 text-center mb-4">
+                    <i class="fa fa-check-circle me-1"></i> @TempData["SuccessMessage"]
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger py-3 text-center mb-4">
+                    <i class="fa fa-exclamation-circle me-1"></i> @TempData["ErrorMessage"]
+                </div>
+            }
+
+            <form method="post" action="/Home/ContactUs" class="ul-contact-form ul-form" autocomplete="off" id="contactUsPageForm">
+                <!-- Anti-Bot Honeypot & Timing Token -->
+                <input type="text" name="inquiry_fax_hp" style="display:none !important; position:absolute; left:-9999px; width:1px; height:1px;" tabindex="-1" autocomplete="new-password" aria-hidden="true">
+                <input type="hidden" name="form_token" value="@RamJankiNGO.Services.AntiSpamValidator.GenerateFormToken()" />
+
+                <div class="row row-cols-2 row-cols-xxs-1 ul-bs-row">
+                    <div class="col">
+                        <div class="form-group">
+                            <input type="text" asp-for="Name" id="contactName" autocomplete="off" placeholder="Your Full Name *" required maxlength="60" oninput="validateRealtimeName(this)">
+                            <div id="contactNameFeedback" class="small mt-1" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group">
+                            <input type="email" asp-for="Email" id="contactEmail" autocomplete="off" placeholder="Email Address *" required maxlength="150" oninput="validateRealtimeEmail(this)">
+                            <div id="contactEmailFeedback" class="small mt-1" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-group">
+                            <input type="tel" asp-for="Phone" id="contactPhone" autocomplete="off" maxlength="10" placeholder="Mobile Number (10 Digits)" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10); validateRealtimeMobile(this)">
+                            <div id="contactPhoneFeedback" class="small mt-1" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-group">
+                            <input type="text" asp-for="Subject" id="contactSubject" autocomplete="off" placeholder="Subject / Cause" maxlength="60">
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-group">
+                            <textarea asp-for="Message" id="contactMessage" placeholder="Type your message (min 8 characters) *" rows="5" required maxlength="2000"></textarea>
+                        </div>
+                    </div>
+                    <div class="col-12 text-center">
+                        <button type="submit" class="ul-btn" id="btnSubmitContactUs"><i class="flaticon-fast-forward-double-right-arrows-symbol"></i> Send Message</button>
+                    </div>
+                </div>
+            </form>
+
+            <script>
+                function validateRealtimeName(input) {
+                    const feedback = document.getElementById('contactNameFeedback');
+                    if (!feedback) return;
+                    const val = input.value.trim();
+                    if (val.length === 0) { feedback.style.display = 'none'; return; }
+                    feedback.style.display = 'block';
+                    if (/http|https|\.cc|\.com|\*|~|<|>|\$|{|}|\[|\]/.test(val.toLowerCase())) {
+                        feedback.className = 'small mt-1 text-danger';
+                        feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Special symbols and URLs are not permitted';
+                    } else if (val.length < 2) {
+                        feedback.className = 'small mt-1 text-warning';
+                        feedback.innerHTML = '<i class="fa fa-info-circle me-1"></i> Min 2 characters';
+                    } else {
+                        feedback.className = 'small mt-1 text-success';
+                        feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Valid Name';
+                    }
+                }
+
+                function validateRealtimeMobile(input) {
+                    const feedback = document.getElementById('contactPhoneFeedback');
+                    if (!feedback) return;
+                    const val = input.value;
+                    if (val.length === 0) {
+                        feedback.style.display = 'none';
+                        return;
+                    }
+                    feedback.style.display = 'block';
+                    if (val.length === 10 && /^[6-9]/.test(val)) {
+                        feedback.className = 'small mt-1 text-success';
+                        feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Valid 10-digit Mobile Number';
+                    } else if (val.length > 0 && !/^[6-9]/.test(val)) {
+                        feedback.className = 'small mt-1 text-danger';
+                        feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Must start with 6, 7, 8, or 9';
+                    } else {
+                        feedback.className = 'small mt-1 text-warning';
+                        feedback.innerHTML = '<i class="fa fa-info-circle me-1"></i> Enter ' + (10 - val.length) + ' more digit(s)';
+                    }
+                }
+
+                function validateRealtimeEmail(input) {
+                    const feedback = document.getElementById('contactEmailFeedback');
+                    if (!feedback) return;
+                    const val = input.value.trim().toLowerCase();
+                    if (val.length === 0) {
+                        feedback.style.display = 'none';
+                        return;
+                    }
+                    feedback.style.display = 'block';
+                    if (val.indexOf('~') !== -1) {
+                        feedback.className = 'small mt-1 text-danger';
+                        feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Invalid character in email';
+                        return;
+                    }
+                    if (/^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val)) {
+                        feedback.className = 'small mt-1 text-success';
+                        feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Valid Email Format';
+                    } else {
+                        feedback.className = 'small mt-1 text-danger';
+                        feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Invalid email format (e.g. name@example.com)';
+                    }
+                }
+
+                document.getElementById('contactUsPageForm')?.addEventListener('submit', function (e) {
+                    const name = document.getElementById('contactName').value.trim();
+                    if (name.length < 2 || /http|https|\.cc|\.com|\*|~/.test(name.toLowerCase())) {
+                        e.preventDefault();
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Invalid Name',
+                            text: 'Please enter a valid human name (letters only, no links or symbols).',
+                            confirmButtonColor: '#e02b20'
+                        });
+                        return;
+                    }
+                    const email = document.getElementById('contactEmail').value.trim().toLowerCase();
+                    if (email.indexOf('~') !== -1 || !/^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+                        e.preventDefault();
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Invalid Email',
+                            text: 'Please enter a valid email address (e.g. name@example.com). Disposable emails are not allowed.',
+                            confirmButtonColor: '#e02b20'
+                        });
+                        return;
+                    }
+                    const phone = document.getElementById('contactPhone').value.trim();
+                    if (phone.length > 0 && !/^[6-9]\d{9}$/.test(phone)) {
+                        e.preventDefault();
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Invalid Mobile Number',
+                            text: 'Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.',
+                            confirmButtonColor: '#e02b20'
+                        });
+                        return;
+                    }
+                    const msg = document.getElementById('contactMessage').value.trim();
+                    if (msg.length < 8) {
+                        e.preventDefault();
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Message Too Short',
+                            text: 'Please write at least 8 characters describing your inquiry.',
+                            confirmButtonColor: '#e02b20'
+                        });
+                        return;
+                    }
+                });
+            </script>
+        </div>
+    </section>
+    <!-- CONTACT SECTION END -->
+</main>

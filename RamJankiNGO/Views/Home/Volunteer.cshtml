@@ -1,0 +1,157 @@
+@model RamJankiNGO.Models.VolunteerDto
+@{
+    ViewData["Title"] = "Volunteer With Us - Shriram Janki Trust";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="ul-breadcrumb ul-section-spacing">
+    <div class="ul-container">
+        <h2 class="ul-breadcrumb-title">Join as a Volunteer</h2>
+        <ul class="ul-breadcrumb-nav">
+            <li><a href="/">Home</a></li>
+            <li><span class="separator"><i class="flaticon-right"></i></span></li>
+            <li>Get Involved</li>
+        </ul>
+    </div>
+</section>
+
+<section class="ul-section-spacing">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10">
+                <div class="card shadow-lg border-0 rounded-4 p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <span class="badge bg-warning text-dark px-3 py-2 fs-6 mb-2"><i class="fa fa-hands-helping me-1"></i> Seva & Volunteering</span>
+                        <h3 class="fw-bold">Be the Change in Society</h3>
+                        <p class="text-muted small">Volunteer your time, skills, and energy for education, health camps, and community welfare programs.</p>
+                    </div>
+
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success py-2">@TempData["SuccessMessage"]</div>
+                    }
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger py-2">@TempData["ErrorMessage"]</div>
+                    }
+
+                    <form method="post" action="/Home/Volunteer" autocomplete="off" id="volunteerForm">
+                        <!-- Anti-Bot Honeypot & Timing Token -->
+                        <input type="text" name="inquiry_fax_hp" style="display:none !important; position:absolute; left:-9999px; width:1px; height:1px;" tabindex="-1" autocomplete="new-password" aria-hidden="true">
+                        <input type="hidden" name="form_token" value="@RamJankiNGO.Services.AntiSpamValidator.GenerateFormToken()" />
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Full Name <span class="text-danger">*</span></label>
+                                <input type="text" asp-for="Name" id="volName" class="form-control" required placeholder="Your full name" autocomplete="off" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Mobile Phone <span class="text-danger">*</span></label>
+                                <input type="tel" asp-for="Phone" id="volPhone" class="form-control" required placeholder="10-digit number" autocomplete="off" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10); validateVolMobile(this)" />
+                                <div id="volPhoneFeedback" class="small mt-1" style="display:none;"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" asp-for="Email" id="volEmail" class="form-control" required placeholder="Enter Email Address" autocomplete="off" oninput="validateVolEmail(this)" />
+                                <div id="volEmailFeedback" class="small mt-1" style="display:none;"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Current Profession / Student</label>
+                                <input type="text" asp-for="Occupation" class="form-control" placeholder="Enter Profession / Student" autocomplete="off" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Preferred Area of Seva</label>
+                                <select asp-for="AreaOfInterest" class="form-select">
+                                    <option value="Education Support">Child Education & Teaching</option>
+                                    <option value="Medical Outreach">Medical Camps & Health Outreach</option>
+                                    <option value="Annakshetra">Food Relief & Annakshetra</option>
+                                    <option value="Community Events">Community Camps & Event Support</option>
+                                    <option value="Digital / Social Media">Social Media & IT Volunteering</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Your City & State</label>
+                                <input type="text" asp-for="Address" class="form-control" placeholder="City, State" autocomplete="off" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Why do you want to join us? (Optional)</label>
+                                <textarea asp-for="Message" class="form-control" rows="3" placeholder="Tell us about yourself and available days" autocomplete="off"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-danger btn-lg w-100 fw-bold shadow">
+                                <i class="fa fa-paper-plane me-1"></i> Submit Volunteer Application
+                            </button>
+                        </div>
+                    </form>
+
+                    <script>
+                        function validateVolMobile(input) {
+                            const feedback = document.getElementById('volPhoneFeedback');
+                            if (!feedback) return;
+                            const val = input.value;
+                            if (val.length === 0) {
+                                feedback.style.display = 'none';
+                                return;
+                            }
+                            feedback.style.display = 'block';
+                            if (val.length === 10 && /^[6-9]/.test(val)) {
+                                feedback.className = 'small mt-1 text-success';
+                                feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Valid 10-digit Mobile Number';
+                            } else if (val.length > 0 && !/^[6-9]/.test(val)) {
+                                feedback.className = 'small mt-1 text-danger';
+                                feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Must start with 6, 7, 8, or 9';
+                            } else {
+                                feedback.className = 'small mt-1 text-warning';
+                                feedback.innerHTML = '<i class="fa fa-info-circle me-1"></i> Enter ' + (10 - val.length) + ' more digit(s)';
+                            }
+                        }
+
+                        function validateVolEmail(input) {
+                            const feedback = document.getElementById('volEmailFeedback');
+                            if (!feedback) return;
+                            const val = input.value.trim();
+                            if (val.length === 0) {
+                                feedback.style.display = 'none';
+                                return;
+                            }
+                            feedback.style.display = 'block';
+                            if (/^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(val)) {
+                                feedback.className = 'small mt-1 text-success';
+                                feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Valid Email';
+                            } else {
+                                feedback.className = 'small mt-1 text-danger';
+                                feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Invalid email format';
+                            }
+                        }
+
+                        document.getElementById('volunteerForm')?.addEventListener('submit', function (e) {
+                            const phone = document.getElementById('volPhone').value.trim();
+                            if (!/^[6-9]\d{9}$/.test(phone)) {
+                                e.preventDefault();
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Invalid Mobile Number',
+                                    text: 'Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.',
+                                    confirmButtonColor: '#e02b20'
+                                });
+                                return;
+                            }
+                            const email = document.getElementById('volEmail').value.trim();
+                            if (!/^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(email)) {
+                                e.preventDefault();
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Invalid Email',
+                                    text: 'Please enter a valid email address.',
+                                    confirmButtonColor: '#e02b20'
+                                });
+                                return;
+                            }
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

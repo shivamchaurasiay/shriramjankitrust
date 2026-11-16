@@ -1,0 +1,142 @@
+@model RamJankiNGO.Models.BlogDetailsDto
+@{
+    bool isEdit = Model != null && Model.BlogId > 0;
+    ViewData["Title"] = isEdit ? "Edit Blog Post" : "Add News / Blog Post";
+    Layout = "~/Areas/Admin/Views/Shared/_adminLayout.cshtml";
+} 
+
+<div class="page-body">
+    <div class="container-fluid">
+        <div class="page-title">
+            <div class="row">
+                <div class="col-6">
+                    <h4>@(isEdit ? "Edit News / Blog Post" : "Add News / Blog Post")</h4>
+                </div>
+                <div class="col-6">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/Admin/Dashboard/Index">
+                                <i class="fa fa-home"></i>
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item"><a href="/Admin/Master/BlogDetailsList">Blogs</a></li>
+                        <li class="breadcrumb-item active">@(isEdit ? "Edit Blog" : "Add Blog")</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container-fluid starts-->
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xl-10 col-lg-12 mx-auto">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                        <h5 class="f-w-600 mb-0">
+                            <i class="fa fa-newspaper text-info me-2"></i>
+                            @(isEdit ? "Edit Blog / News Article" : "Create New Blog / News Article")
+                        </h5>
+                        <a href="/Admin/Master/BlogDetailsList" class="btn btn-outline-secondary btn-sm">
+                            <i class="fa fa-arrow-left me-1"></i> Back to Blogs List
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="/Admin/Master/AddBlogDetails" enctype="multipart/form-data">
+                            <input type="hidden" asp-for="BlogId" />
+                            <input type="hidden" asp-for="Filename" />
+
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label f-w-600" for="BlogTopic">Category / Topic <span class="text-danger">*</span></label>
+                                    <input class="form-control" asp-for="BlogTopic" id="BlogTopic" type="text" placeholder="e.g. Education, Health, Food Seva" required autocomplete="off" />
+                                    <span class="text-danger" asp-validation-for="BlogTopic"></span>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label f-w-600" for="BlogHeading">Short Heading / Sub-title <span class="text-danger">*</span></label>
+                                    <input class="form-control" asp-for="BlogHeading" id="BlogHeading" type="text" placeholder="e.g. New Learning Centers Launched" required autocomplete="off" />
+                                    <span class="text-danger" asp-validation-for="BlogHeading"></span>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label f-w-600" for="BlogTittle">Article Title <span class="text-danger">*</span></label>
+                                    <input class="form-control" asp-for="BlogTittle" id="BlogTittle" type="text" placeholder="e.g. 10 New Smart Learning Centers in Rural Villages" required autocomplete="off" />
+                                    <span class="text-danger" asp-validation-for="BlogTittle"></span>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label f-w-600" for="PostDate">Publish Date <span class="text-danger">*</span></label>
+                                    <input class="form-control" asp-for="PostDate" id="PostDate" type="date" required autocomplete="off" />
+                                    <span class="text-danger" asp-validation-for="PostDate"></span>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label f-w-600" for="FilePath">
+                                        Cover Image @(isEdit ? "(Leave blank to keep existing)" : "")
+                                        @if (!isEdit)
+                                        {
+                                            <span class="text-danger">*</span>
+                                        }
+                                    </label>
+                                    @if (isEdit)
+                                    {
+                                        <input class="form-control" asp-for="FilePath" id="FilePath" type="file" accept="image/*" />
+                                    }
+                                    else
+                                    {
+                                        <input class="form-control" asp-for="FilePath" id="FilePath" type="file" accept="image/*" required />
+                                    }
+                                    <span class="text-danger" asp-validation-for="FilePath"></span>
+
+                                    @if (Model != null && !string.IsNullOrEmpty(Model.Filename))
+                                    {
+                                        var bImg = (Model.Filename.StartsWith("/") || Model.Filename.StartsWith("http")) ? Model.Filename : ("/uploads/" + Model.Filename);
+                                        <div class="mt-2 p-2 border rounded bg-light d-flex align-items-center gap-2">
+                                            <img src="@bImg" alt="Blog Image" class="rounded border shadow-sm" style="width: 70px; height: 50px; object-fit: cover;" onerror="this.src='/assets/img/blog-1.jpg';" />
+                                            <span class="small text-muted">Current cover photo</span>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label f-w-600" for="Status">Status</label>
+                                    <select class="form-select" asp-for="Status" id="Status">
+                                        <option value="1">Active / Published</option>
+                                        <option value="0">Draft / Inactive</option>
+                                    </select>
+                                    <span class="text-danger" asp-validation-for="Status"></span>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label f-w-600" for="BlogDescription">Article Body / Content</label>
+                                    <textarea class="form-control" asp-for="BlogDescription" id="BlogDescription" rows="8" placeholder="Full article content..."></textarea>
+                                    <span class="text-danger" asp-validation-for="BlogDescription"></span>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                                <a href="/Admin/Master/BlogDetailsList" class="btn btn-outline-secondary">
+                                    <i class="fa fa-times me-1"></i> Cancel
+                                </a>
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fa fa-save me-1"></i> @(isEdit ? "Update Blog Post" : "Publish Blog Post")
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Container-fluid Ends-->
+</div>
+
+@section Scripts {
+    <script src="https://cdn.ckeditor.com/ckeditor5/38.0.1/classic/ckeditor.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            ClassicEditor
+                .create(document.querySelector('#BlogDescription'))
+                .catch(error => {
+                    console.error(error);
+                });
+        });
+    </script>
+}

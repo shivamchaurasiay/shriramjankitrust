@@ -1,0 +1,88 @@
+﻿@using System.Data
+@model DataTable
+@{
+    ViewData["Title"] = "News & Events";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<main>
+    <!-- BREADCRUMBS SECTION START -->
+    <section class="ul-breadcrumb ul-section-spacing">
+        <div class="ul-container">
+            <h2 class="ul-breadcrumb-title">News &amp; Events</h2>
+            <ul class="ul-breadcrumb-nav">
+                <li><a href="/">Home</a></li>
+                <li><span class="separator"><i class="flaticon-right"></i></span></li>
+                <li>News &amp; Events</li>
+            </ul>
+        </div>
+    </section>
+    <!-- BREADCRUMBS SECTION END -->
+
+    <!-- EVENTS SECTION START -->
+    <section class="ul-section-spacing">
+        <div class="ul-container">
+            <div class="ul-section-heading mb-4">
+                <div>
+                    <span class="ul-section-sub-title">Stay Updated with Our Seva</span>
+                    <h2 class="ul-section-title">Latest Welfare Initiatives &amp; Upcoming Drives</h2>
+                </div>
+            </div>
+
+            <!-- events wrapper -->
+            <div class="ul-events-wrapper">
+                <div class="row ul-bs-row row-cols-lg-2 row-cols-1 g-4">
+                    @if (Model != null && Model.Rows.Count > 0)
+                    {
+                        foreach (DataRow row in Model.Rows)
+                        {
+                            int blogId = Convert.ToInt32(row["BlogId"]);
+                            string title = row["Title"]?.ToString() ?? "";
+                            string cat = row["Category"]?.ToString() ?? "Welfare Event";
+                            string shortDesc = row["ShortDescription"]?.ToString() ?? "";
+                            string img = !string.IsNullOrEmpty(row["ImagePath"]?.ToString()) ? row["ImagePath"].ToString()! : "/assets/img/event-img.jpg";
+                            DateTime dtCreated = row["CreatedAt"] != DBNull.Value ? Convert.ToDateTime(row["CreatedAt"]) : DateTime.Now;
+
+                            <div class="col wow animate__fadeInUp">
+                                <div class="ul-event ul-event--inner h-100 rounded-4 overflow-hidden shadow-sm" style="background:#fff; border: 1px solid #f0e6dd;">
+                                    <div class="ul-event-img position-relative" style="height: 240px; overflow:hidden;">
+                                        <img src="@Url.Content(img)" alt="@title" style="width:100%; height:100%; object-fit: cover;">
+                                        <span class="date position-absolute top-0 start-0 m-3 px-3 py-2 rounded text-center text-white" style="background: #e85a2a; font-weight:700;">
+                                            @dtCreated.Day <span style="font-size:0.75rem; text-transform:uppercase; display:block;">@dtCreated.ToString("MMM")</span>
+                                        </span>
+                                        <span class="badge position-absolute top-0 end-0 m-3 px-3 py-2 rounded-pill text-white" style="background-color: rgba(0,0,0,0.65); font-weight: 600;">
+                                            @cat
+                                        </span>
+                                    </div>
+                                    <div class="ul-event-txt p-4 d-flex flex-column">
+                                        <h3 class="ul-event-title mb-2" style="font-size: 1.2rem; line-height: 1.4;">
+                                            <a href="/Home/EventDetails/@blogId" class="text-dark text-decoration-none">@title</a>
+                                        </h3>
+                                        <p class="ul-event-descr text-muted small flex-grow-1 mb-3" style="line-height: 1.6;">
+                                            @shortDesc
+                                        </p>
+                                        <div class="ul-event-info mb-3 p-2 rounded-3" style="background: #faf6f2;">
+                                            <span class="ul-event-info-title text-danger fw-bold small"><i class="flaticon-pin me-1"></i> Location / Seva Kendra:</span>
+                                            <p class="ul-event-info-descr text-dark small mb-0">Ayodhya Dham &amp; Surrounding Rural Blocks, Uttar Pradesh</p>
+                                        </div>
+                                        <div class="mt-auto d-flex justify-content-between align-items-center">
+                                            <a href="/Home/EventDetails/@blogId" class="ul-btn"><i class="flaticon-fast-forward-double-right-arrows-symbol"></i> Read Details</a>
+                                            <a href="/Home/Donation" class="btn btn-outline-danger btn-sm rounded-pill px-3"><i class="flaticon-heart me-1"></i> Support This Drive</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="col-12 text-center py-5">
+                            <p class="text-muted">No news &amp; events published yet. Check back soon!</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- EVENTS SECTION END -->
+</main>

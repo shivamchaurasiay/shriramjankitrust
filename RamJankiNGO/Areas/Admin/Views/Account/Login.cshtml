@@ -1,0 +1,150 @@
+@model RamJankiNGO.Models.LoginDto
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="~/assets/img/logo.png">
+    <link rel="icon" href="~/assets/img/logo.png" type="image/x-icon">
+    <link rel="shortcut icon" href="~/assets/img/logo.png" type="image/x-icon">
+    <title>Shri Ram Janki Trust - Admin Portal</title>
+    <!-- Google font-->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="~/adminassets/css/font-awesome.css">
+    <link rel="stylesheet" type="text/css" href="~/adminassets/css/vendors/icofont.css">
+    <link rel="stylesheet" type="text/css" href="~/adminassets/css/vendors/themify.css">
+    <link rel="stylesheet" type="text/css" href="~/adminassets/css/vendors/flag-icon.css">
+    <link rel="stylesheet" type="text/css" href="~/adminassets/css/vendors/feather-icon.css">
+    <link rel="stylesheet" type="text/css" href="~/adminassets/css/vendors/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="~/adminassets/css/style.css">
+    <link id="color" rel="stylesheet" href="~/adminassets/css/color-1.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="~/adminassets/css/responsive.css">
+
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .toggle-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #666;
+        }
+        .toggle-icon i {
+            font-size: 15px;
+        }
+        .login-card {
+            background: linear-gradient(135deg, #fff8f0 0%, #f7f0e8 100%) !important;
+            min-height: 100vh;
+        }
+        .login-main {
+            border-radius: 16px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;
+            border: 1px solid #f0e2d3 !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- login page start-->
+    <div class="container-fluid p-0">
+        <div class="notification-container">
+            @await Html.PartialAsync("_Notification")
+        </div>
+        <div class="row m-0">
+            <div class="col-12 p-0">
+                <div class="login-card login-dark d-flex align-items-center justify-content-center">
+                    <div style="max-width: 450px; width: 100%;">
+                        <div class="text-center mb-3">
+                            <a class="logo d-inline-block text-decoration-none" href="/Admin/Account/Login">
+                                <img class="img-fluid" src="~/assets/img/logo.png" alt="Shri Ram Janki Trust" style="height:80px;" onerror="this.src='/assets/img/logo.svg'">
+                                <h4 class="fw-bold text-dark mt-2 mb-0" style="color: #2b2b2b !important;">श्रीराम जानकी मंदिर सेवा ट्रस्ट</h4>
+                                <span class="small text-danger fw-semibold">SHRI RAM JANKI MANDIR SEWA TRUST &bull; Admin Suite</span>
+                            </a>
+                        </div>
+                        <div class="login-main bg-white p-4 p-md-5">
+                            <form class="theme-form" action="/Admin/Account/Login" method="post" enctype="multipart/form-data" autocomplete="off">
+                                <h4 class="fw-bold text-dark mb-1">Sign in to account</h4>
+                                <p class="text-muted small mb-3">Authorized trustees and administrators only</p>
+
+                                @if (TempData["ErrorMessage"] != null)
+                                {
+                                    <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3">
+                                        <i class="fa fa-exclamation-triangle me-1"></i> @TempData["ErrorMessage"]
+                                    </div>
+                                }
+                                @if (TempData["SuccessMessage"] != null)
+                                {
+                                    <div class="alert alert-success py-2 px-3 small rounded-3 mb-3">
+                                        <i class="fa fa-check-circle me-1"></i> @TempData["SuccessMessage"]
+                                    </div>
+                                }
+
+                                <div class="form-group mb-3">
+                                    <label class="col-form-label fw-bold text-secondary small">Email or Mobile Number</label>
+                                    <input class="form-control form-control-lg fs-6" type="text" required name="Mobile" placeholder="Enter Email or Mobile Number" autocomplete="off" value="@(Model?.Mobile ?? "")">
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label class="col-form-label fw-bold text-secondary small">Password</label>
+                                    <div class="form-input position-relative">
+                                        <input class="form-control form-control-lg fs-6" type="password" id="Password" name="Password" required placeholder="Enter Password" autocomplete="new-password">
+                                        <span class="toggle-icon" id="toggle-icon" onclick="togglePassword()">
+                                            <i class="fa-solid fa-eye" id="eye-icon"></i>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mb-0">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="form-check mb-0">
+                                            <input id="checkbox1" class="form-check-input" type="checkbox">
+                                            <label class="form-check-label text-muted small" for="checkbox1">Remember me</label>
+                                        </div>
+                                        <a class="link text-danger small fw-semibold" href="/MemberPortal/ForgotPassword">Forgot password?</a>
+                                    </div>
+                                    <button class="btn btn-primary btn-block w-100 py-2 fw-bold" style="background-color: #0b6059; border-color: #0b6059;" type="submit">Sign in to Admin</button>
+                                </div>
+
+                                <div class="text-center mt-4 border-top pt-3">
+                                    <a href="/" class="text-muted small text-decoration-none">
+                                        &larr; Return to Trust Website
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- latest jquery-->
+        <script src="~/adminassets/js/jquery.min.js"></script>
+        <script src="~/adminassets/js/bootstrap/bootstrap.bundle.min.js"></script>
+        <script src="~/adminassets/js/icons/feather-icon/feather.min.js"></script>
+        <script src="~/adminassets/js/icons/feather-icon/feather-icon.js"></script>
+        <script src="~/adminassets/js/config.js"></script>
+        <script src="~/adminassets/js/script.js"></script>
+        <script>
+            function togglePassword() {
+                var passwordInput = document.getElementById('Password');
+                var eyeIcon = document.getElementById('eye-icon');
+
+                if (passwordInput.type === "password") {
+                    passwordInput.type = "text";
+                    eyeIcon.classList.add('fa-eye');
+                    eyeIcon.classList.remove('fa-eye-slash');
+                } else {
+                    passwordInput.type = "password";
+                    eyeIcon.classList.add('fa-eye-slash');
+                    eyeIcon.classList.remove('fa-eye');
+                }
+            }
+        </script>
+    </div>
+</body>
+</html>

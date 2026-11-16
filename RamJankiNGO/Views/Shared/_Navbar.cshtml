@@ -1,0 +1,88 @@
+﻿@using Microsoft.AspNetCore.Http
+@{
+    var memberName = Context.Session.GetString("MemberName");
+}
+<nav class="ul-header-nav">
+    <!-- Home -->
+    <a asp-controller="Home" asp-action="Index">
+        <i class="fa fa-home me-2 text-danger d-lg-none" style="width: 18px;"></i><span>Home</span>
+    </a>
+
+    <!-- About Us -->
+    <div class="has-sub-menu">
+        <a role="button">
+            <span><i class="fa fa-info-circle me-2 text-danger d-lg-none" style="width: 18px;"></i>About Us</span>
+        </a>
+        <div class="ul-header-submenu">
+            <ul>
+                <li><a asp-controller="Home" asp-action="AboutUs">About Shriram Janki Trust</a></li>
+                <li><a href="/Home/AboutUs#mission">Our Mission &amp; Vision</a></li>
+                <li><a href="/Home/AboutUs#team">Our Trustees &amp; Team</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Our Work / Causes -->
+    <a asp-controller="Home" asp-action="Causes">
+        <i class="fa fa-hand-holding-heart me-2 text-danger d-lg-none" style="width: 18px;"></i><span>Our Causes</span>
+    </a>
+
+    <!-- Get Involved -->
+    <div class="has-sub-menu">
+        <a role="button">
+            <span><i class="fa fa-users me-2 text-danger d-lg-none" style="width: 18px;"></i>Get Involved</span>
+        </a>
+        <div class="ul-header-submenu">
+            <ul>
+                <li><a asp-controller="Home" asp-action="Volunteer">Volunteer With Us</a></li>
+                <li><a asp-controller="Home" asp-action="Gallery">Photo Gallery</a></li>
+                <li><a asp-controller="Home" asp-action="ContactUs">Partner With Us</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Donate Now (In Menu for Mobile Drawer) -->
+    <a asp-controller="Home" asp-action="Donation" class="text-danger fw-bold d-lg-none">
+        <i class="fa fa-heart me-2 text-danger" style="width: 18px;"></i><span>Donate Now / सहयोग करें</span>
+    </a>
+
+    <!-- Updates -->
+    <a asp-controller="Home" asp-action="Event">
+        <i class="fa fa-newspaper me-2 text-danger d-lg-none" style="width: 18px;"></i><span>News &amp; Events</span>
+    </a>
+
+    <!-- Contact -->
+    <a asp-controller="Home" asp-action="ContactUs">
+        <i class="fa fa-envelope me-2 text-danger d-lg-none" style="width: 18px;"></i><span>Contact Us</span>
+    </a>
+
+    <!-- User Login / Profile Dashboard (Visible on both Desktop and Mobile Drawer) -->
+    @if (!string.IsNullOrEmpty(memberName))
+    {
+        <div class="has-sub-menu">
+            <a role="button" class="text-danger fw-semibold">
+                <span>
+                    <i class="fa fa-user-circle me-2 text-danger d-lg-none" style="width: 18px;"></i>
+                    <span class="rounded-circle bg-danger text-white d-none d-lg-inline-flex align-items-center justify-content-center me-1" style="width: 26px; height: 26px; font-size: 12px;">
+                        <i class="fa fa-user"></i>
+                    </span>
+                    @memberName
+                </span>
+            </a>
+            <div class="ul-header-submenu shadow-lg rounded-3 border-0 py-2" style="min-width: 220px;">
+                <ul>
+                    <li><a href="/MemberPortal/Dashboard"><i class="fa fa-tachometer-alt me-2 text-danger"></i> Dashboard &amp; Invoices</a></li>
+                    <li><a href="/MemberPortal/Profile"><i class="fa fa-user-edit me-2 text-danger"></i> My Profile</a></li>
+                    <li><a href="/MemberPortal/Donations"><i class="fa fa-receipt me-2 text-danger"></i> Donation Receipts</a></li>
+                    <li class="border-top mt-1 pt-1"><a href="/MemberPortal/Logout" class="text-danger"><i class="fa fa-sign-out-alt me-2"></i> Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    }
+    else
+    {
+        <a href="/MemberPortal/Login" class="fw-semibold">
+            <i class="fa fa-user-circle me-1 text-danger" style="width: 18px;"></i><span>Login</span>
+        </a>
+    }
+</nav>

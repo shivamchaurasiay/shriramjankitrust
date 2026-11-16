@@ -1,0 +1,284 @@
+﻿@using Microsoft.AspNetCore.Http
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " - Shriram Janki Mandir Sewa Trust" : "Shriram Janki Mandir Sewa Trust - Ayodhya (Regd.)")</title>
+
+    <!-- Favicon / Tab Logo Icon -->
+    <link rel="icon" href="~/assets/img/logo.png" type="image/png">
+    <link rel="shortcut icon" href="~/assets/img/logo.png" type="image/x-icon">
+    <link rel="apple-touch-icon" href="~/assets/img/logo.png">
+
+    <!-- libraries CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="~/adminassets/css/font-awesome.css">
+    <link rel="stylesheet" href="~/assets/icon/flaticon_charitics.css">
+    <link rel="stylesheet" href="~/assets/vendor/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="~/assets/vendor/splide/splide.min.css">
+    <link rel="stylesheet" href="~/assets/vendor/swiper/swiper-bundle.min.css">
+    <link rel="stylesheet" href="~/assets/vendor/slim-select/slimselect.css">
+    <link rel="stylesheet" href="~/assets/vendor/animate-wow/animate.min.css">
+    <link rel="stylesheet" href="~/assets/vendor/flatpickr/flatpickr.min.css">
+
+    <!-- custom CSS -->
+    <link rel="stylesheet" href="~/assets/css/style.css">
+
+    <style>
+        /* Suppress Caret Cursor on non-editable elements across user website */
+        *:not(input):not(textarea):not([contenteditable="true"]) {
+            caret-color: transparent !important;
+        }
+        input, textarea, [contenteditable="true"] {
+            caret-color: auto !important;
+        }
+
+        /* Mobile & Button Text Responsiveness */
+        .btn, .ul-btn {
+            white-space: normal !important;
+            word-break: normal !important;
+            text-align: center !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        /* Clean Google Translate Widget - No ugly top bar or frames */
+        .goog-te-banner-frame.skiptranslate, .goog-te-banner-frame {
+            display: none !important;
+        }
+        body {
+            top: 0px !important;
+            position: static !important;
+        }
+        #goog-gt-tt, .goog-te-balloon-frame {
+            display: none !important;
+        }
+        .goog-text-highlight {
+            background: none !important;
+            box-shadow: none !important;
+        }
+        .goog-te-gadget {
+            font-size: 0px !important;
+            color: transparent !important;
+        }
+        .goog-te-gadget .goog-te-combo {
+            display: none !important;
+        }
+        .skiptranslate:not(.lang-switch-wrap) {
+            font-size: inherit;
+        }
+        .lang-switch-wrap button.active {
+            background-color: #ffb300 !important;
+            color: #1a1a1a !important;
+            border-color: #ffb300 !important;
+        }
+        @@media (max-width: 768px) {
+            .btn, .ul-btn {
+                font-size: 0.92rem !important;
+                padding: 9px 16px !important;
+                line-height: 1.35 !important;
+            }
+            .btn-lg {
+                font-size: 1rem !important;
+                padding: 11px 18px !important;
+            }
+            .container, .ul-container {
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+        }
+        @@media (max-width: 480px) {
+            .btn, .ul-btn {
+                font-size: 0.86rem !important;
+                padding: 8px 12px !important;
+            }
+            .btn-lg {
+                font-size: 0.95rem !important;
+                padding: 10px 14px !important;
+            }
+            h1, .ul-banner-title {
+                font-size: 1.75rem !important;
+                line-height: 1.25 !important;
+            }
+            h2, .ul-section-title {
+                font-size: 1.45rem !important;
+                line-height: 1.3 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="preloader" id="preloader">
+        <div class="loader"></div>
+    </div>
+
+    <partial name="_Sidebar" />
+
+    <!-- SEARCH MODAL SECTION START -->
+    <div class="ul-search-form-wrapper flex-grow-1 flex-shrink-0">
+        <button class="ul-search-closer"><i class="flaticon-close"></i></button>
+
+        <form action="#" class="ul-search-form">
+            <div class="ul-search-form-right">
+                <input type="search" name="search" id="ul-search" placeholder="Search Here">
+                <button type="submit"><span class="icon"><i class="flaticon-search"></i></span></button>
+            </div>
+        </form>
+    </div>
+    <!-- SEARCH MODAL SECTION END -->
+    <partial name="_Header" />
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+
+    <partial name="_Footer" />
+    <partial name="_DonationModal" />
+
+   
+    <!-- libraries JS -->
+    <script src="~/assets/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="~/assets/vendor/splide/splide.min.js"></script>
+    <script src="~/assets/vendor/splide/splide-extension-auto-scroll.min.js"></script>
+    <script src="~/assets/vendor/swiper/swiper-bundle.min.js"></script>
+    <script src="~/assets/vendor/slim-select/slimselect.min.js"></script>
+    <script src="~/assets/vendor/animate-wow/wow.min.js"></script>
+    <script src="~/assets/vendor/splittype/index.min.js"></script>
+    <script src="~/assets/vendor/mixitup/mixitup.min.js"></script>
+    <script src="~/assets/vendor/fslightbox/fslightbox.js"></script>
+    <script src="~/assets/vendor/flatpickr/flatpickr.js"></script>
+
+    <!-- custom JS -->
+    <script src="~/assets/js/main.js"></script>
+    <script src="~/assets/js/tab.js"></script>
+    <!-- <script src="assets/js/countdown.js"></script> -->
+    <script src="~/assets/js/accordion.js"></script>
+    <script src="~/assets/js/progressbar.js"></script>
+    <script src="~/assets/js/donate-form.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            @if (TempData["AuthSuccess"] != null)
+            {
+                <text>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'जय श्री राम',
+                    html: '@Html.Raw(TempData["AuthSuccess"])',
+                    confirmButtonColor: '#e03e2d',
+                    confirmButtonText: 'ठीक है / OK'
+                });
+                </text>
+            }
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <text>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'सफलता / Success',
+                    html: '@Html.Raw(TempData["SuccessMessage"])',
+                    confirmButtonColor: '#e03e2d',
+                    confirmButtonText: 'ठीक है / OK'
+                });
+                </text>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <text>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'सूचना / Notice',
+                    html: '@Html.Raw(TempData["ErrorMessage"])',
+                    confirmButtonColor: '#e03e2d'
+                });
+                </text>
+            }
+            @if (ViewBag.ErrorMessage != null)
+            {
+                <text>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'त्रुटि / Error',
+                    html: '@Html.Raw(ViewBag.ErrorMessage)',
+                    confirmButtonColor: '#e03e2d'
+                });
+                </text>
+            }
+
+            // Sync Member Session to LocalStorage (1 Week)
+            try {
+                @if (Context.Session.GetString("MemberUserId") != null)
+                {
+                    <text>
+                    localStorage.setItem('sjt_member_session', JSON.stringify({
+                        memberUserId: '@Context.Session.GetString("MemberUserId")',
+                        memberName: '@Context.Session.GetString("MemberName")',
+                        memberCode: '@Context.Session.GetString("MemberCode")',
+                        savedAt: new Date().toISOString(),
+                        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+                    }));
+                    </text>
+                }
+            } catch (e) {}
+        });
+
+        // Google Translate Language Switcher Functions
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,hi,bn,gu,mr,pa,ta,te,sa,ur',
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+
+        function changeLanguage(langCode) {
+            if (!langCode) return;
+            var host = window.location.hostname;
+            var cookieVal = '/en/' + langCode;
+            document.cookie = 'googtrans=' + cookieVal + '; path=/;';
+            document.cookie = 'googtrans=' + cookieVal + '; path=/; domain=' + host;
+            var parts = host.split('.');
+            if (parts.length > 2) {
+                document.cookie = 'googtrans=' + cookieVal + '; path=/; domain=.' + parts.slice(-2).join('.');
+            }
+            try {
+                localStorage.setItem('sjt_pref_lang', langCode);
+            } catch(e) {}
+            location.reload();
+        }
+
+        // Highlight Active Language Button on page load
+        document.addEventListener("DOMContentLoaded", function () {
+            var currLang = 'en';
+            try {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var c = cookies[i].trim();
+                    if (c.indexOf('googtrans=') === 0) {
+                        var val = c.substring(10);
+                        var segs = val.split('/');
+                        if (segs.length >= 3) currLang = segs[2];
+                    }
+                }
+                var saved = localStorage.getItem('sjt_pref_lang');
+                if (saved) currLang = saved;
+            } catch(e) {}
+
+            var btnEn = document.getElementById('btnLangEn');
+            var btnHi = document.getElementById('btnLangHi');
+            if (currLang === 'hi') {
+                if (btnEn) btnEn.classList.remove('active');
+                if (btnHi) btnHi.classList.add('active');
+            } else {
+                if (btnEn) btnEn.classList.add('active');
+                if (btnHi) btnHi.classList.remove('active');
+            }
+        });
+    </script>
+    <!-- Hidden Google Translate Element -->
+    <div id="google_translate_element" style="display:none;"></div>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

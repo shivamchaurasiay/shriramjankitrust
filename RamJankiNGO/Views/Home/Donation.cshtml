@@ -1,0 +1,710 @@
+﻿@model RamJankiNGO.Models.DonationDto
+@using System.Data
+@{
+    ViewData["Title"] = "Make a Donation - Shri Ram Janki Mandir Sewa Trust";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var campaigns = ViewBag.Campaigns as DataTable;
+    var settings = ViewBag.Settings as RamJankiNGO.Models.SettingsDto ?? new RamJankiNGO.Models.SettingsDto();
+    int? selectedCamp = ViewBag.SelectedCampaignId as int?;
+}
+
+<section class="ul-breadcrumb ul-section-spacing">
+    <div class="ul-container">
+        <h2 class="ul-breadcrumb-title">Online Seva &amp; Donation</h2>
+        <ul class="ul-breadcrumb-nav">
+            <li><a href="/">Home</a></li>
+            <li><span class="separator"><i class="flaticon-right"></i></span></li>
+            <li>Make a Donation</li>
+        </ul>
+    </div>
+</section>
+
+<section class="ul-section-spacing overflow-hidden bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10">
+                <div class="card shadow-lg border-0 rounded-4 overflow-hidden bg-white">
+                    <!-- Card Top Header -->
+                    <div class="p-4 text-center text-white" style="background: linear-gradient(135deg, #e65100 0%, #f57c00 100%);">
+                        <div class="d-inline-flex align-items-center gap-2 mb-2">
+                            <img src="~/assets/img/logo.png" alt="Logo" style="height: 48px; width: auto;" onerror="this.style.display='none'">
+                            <div class="text-start">
+                                <h4 class="text-white fw-bold mb-0" style="font-family: 'Cinzel', serif;">SHRI RAM JANKI MANDIR SEWA TRUST</h4>
+                                <span class="badge bg-warning text-dark small">80G &amp; 12A Approved Tax Exempt Seva</span>
+                            </div>
+                        </div>
+                        <p class="text-white-50 small mb-0">Your sacred contribution brings daily food, healthcare, and education to underprivileged lives.</p>
+                    </div>
+
+                    <div class="card-body p-4 p-md-5">
+                        @if (TempData["ErrorMessage"] != null)
+                        {
+                            <div class="alert alert-danger py-2">@TempData["ErrorMessage"]</div>
+                        }
+
+                        <form method="post" action="/Home/Donation" id="donationForm" autocomplete="off">
+                            <!-- Hidden payment mode to be updated by gateway -->
+                            <input type="hidden" asp-for="PaymentMode" id="selectedPaymentMode" value="UPI" />
+
+                            <!-- 1. Cause Selection -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold fs-6"><i class="fa fa-hands-helping text-danger me-1"></i> 1. Choose a Cause / Program</label>
+                                <select asp-for="CampaignId" id="campaignSelect" class="form-select form-select-lg">
+                                    <option value="" data-title="General Social Welfare & Seva Fund">General Social Welfare &amp; Seva Fund</option>
+                                    @if (campaigns != null)
+                                    {
+                                        foreach (DataRow c in campaigns.Rows)
+                                        {
+                                            int cid = Convert.ToInt32(c["CampaignId"]);
+                                            <option value="@cid" data-title="@c["Title"]" selected="@(selectedCamp == cid)">@c["Title"] (@c["Category"])</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <!-- 2. Donation Amount Presets -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold fs-6"><i class="fa fa-coins text-danger me-1"></i> 2. Select Donation Amount (INR)</label>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-4 col-sm-2">
+                                        <button type="button" class="btn btn-outline-danger w-100 py-2 fw-bold amt-preset" onclick="setAmount(500)">₹500</button>
+                                    </div>
+                                    <div class="col-4 col-sm-2">
+                                        <button type="button" class="btn btn-danger w-100 py-2 fw-bold amt-preset active" onclick="setAmount(1000)">₹1,000</button>
+                                    </div>
+                                    <div class="col-4 col-sm-2">
+                                        <button type="button" class="btn btn-outline-danger w-100 py-2 fw-bold amt-preset" onclick="setAmount(2500)">₹2,500</button>
+                                    </div>
+                                    <div class="col-4 col-sm-2">
+                                        <button type="button" class="btn btn-outline-danger w-100 py-2 fw-bold amt-preset" onclick="setAmount(5000)">₹5,000</button>
+                                    </div>
+                                    <div class="col-4 col-sm-2">
+                                        <button type="button" class="btn btn-outline-danger w-100 py-2 fw-bold amt-preset" onclick="setAmount(10000)">₹10,000</button>
+                                    </div>
+                                    <div class="col-4 col-sm-2">
+                                        <button type="button" class="btn btn-outline-secondary w-100 py-2 fw-bold" onclick="document.getElementById('customAmountInput').focus()">Custom</button>
+                                    </div>
+                                </div>
+
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-white fw-bold text-danger">₹</span>
+                                    <input type="number" step="1" asp-for="Amount" id="customAmountInput" class="form-control fw-bold fs-4" value="1000" min="1" required placeholder="Enter custom amount" autocomplete="off" />
+                                </div>
+                            </div>
+
+                            <!-- 3. Donor Personal Details -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold fs-6"><i class="fa fa-id-card text-danger me-1"></i> 3. Donor Information</label>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">Full Name <span class="text-danger">*</span></label>
+                                        <input type="text" asp-for="DonorName" id="donorNameInput" class="form-control" required placeholder="Enter Full Name (e.g. Ramesh Sharma)" autocomplete="off" oninput="validateDonationName(this)" />
+                                        <div id="donorNameFeedback" class="small mt-1" style="display:none;"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">Mobile Number <span class="text-danger">*</span></label>
+                                        <input type="tel" asp-for="DonorPhone" id="donorPhoneInput" class="form-control" required placeholder="10-digit mobile number" maxlength="10" autocomplete="off" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10); validateDonationMobile(this)" />
+                                        <div id="donorPhoneFeedback" class="small mt-1" style="display:none;"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">Email Address (for official 80G receipt)</label>
+                                        <input type="email" asp-for="DonorEmail" id="donorEmailInput" class="form-control" placeholder="Enter Email Address" autocomplete="off" oninput="validateDonationEmail(this)" />
+                                        <div id="donorEmailFeedback" class="small mt-1" style="display:none;"></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">PAN Number (Required for 80G tax benefit)</label>
+                                        <input type="text" asp-for="DonorPan" id="donorPanInput" class="form-control text-uppercase" placeholder="Enter PAN Number (e.g. ABCDE1234F)" maxlength="10" autocomplete="off" oninput="this.value = this.value.toUpperCase().slice(0, 10); validateDonationPan(this)" />
+                                        <div id="donorPanFeedback" class="small mt-1" style="display:none;"></div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label small text-muted">Address (for official receipt)</label>
+                                        <input type="text" asp-for="DonorAddress" id="donorAddressInput" class="form-control" placeholder="City, State, Pin Code" autocomplete="off" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Payment Security Trust badges -->
+                            <div class="p-3 bg-light rounded-3 mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2 border">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa fa-shield-alt text-success fs-3"></i>
+                                    <div>
+                                        <div class="fw-bold small text-dark">100% Verified Trust Account &amp; Secure Payment</div>
+                                        <div class="text-muted f-11">Beneficiary: <strong>Indian Bank (A/C: 8242427234, IFSC: IDIB000B510)</strong></div>
+                                    </div>
+                                </div>
+                                <div class="badge bg-white text-dark border p-2">UPI &bull; QR Code &bull; Cards &bull; NetBanking</div>
+                            </div>
+
+                            <!-- Open Payment Gateway Trigger Button -->
+                            <button type="button" class="btn btn-danger btn-lg w-100 py-3 fw-bold fs-5 shadow" onclick="openPaymentGatewayModal()">
+                                <i class="flaticon-heart me-1"></i> Proceed to Pay &amp; Donate Now &nearr;
+                            </button>
+
+                            <!-- Network Recovery Help Link -->
+                            <div class="text-center mt-3 pt-2 border-top">
+                                <a href="/Home/TrackPayment" class="text-decoration-none small text-muted fw-semibold">
+                                    <i class="fa fa-search text-danger me-1"></i> पैसे कट गए लेकिन नेटवर्क की वजह से रसीद नहीं मिली? <span class="text-danger">यहाँ वेरीफाई करें &rarr;</span>
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- REALISTIC BRANDED PAYMENT GATEWAY MODAL -->
+<div class="modal fade" id="paymentGatewayModal" tabindex="-1" aria-labelledby="paymentGatewayLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 overflow-hidden shadow-lg">
+            <!-- Gateway Header with Logo & Trust Details -->
+            <div class="modal-header border-0 p-4 text-white position-relative" style="background: linear-gradient(135deg, #e65100 0%, #bf360c 100%);">
+                <div class="d-flex align-items-center gap-3">
+                    <img src="~/assets/img/logo.png" alt="Logo" style="height: 52px; width: auto; background: #fff; padding: 3px; border-radius: 8px;" onerror="this.style.display='none'">
+                    <div>
+                        <h5 class="modal-title fw-bold text-white mb-0" id="paymentGatewayLabel" style="font-family: 'Cinzel', serif;">SHRI RAM JANKI MANDIR SEWA TRUST</h5>
+                        <div class="small text-warning"><i class="fa fa-lock me-1"></i> 256-Bit SSL Encrypted Payment Gateway &bull; 80G Tax Exempt</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Amount Highlight Ribbon -->
+            <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <span class="text-muted small d-block">DONATION AMOUNT (दान राशि)</span>
+                    <h3 class="fw-bold text-danger mb-0" id="gwDisplayAmount">&#8377;1,000.00</h3>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-danger mb-1" id="gwDisplayCause">General Social Welfare Fund</span>
+                    <div class="small text-muted" id="gwDisplayDonor">Donor: Ramesh Kumar</div>
+                </div>
+            </div>
+
+            <div class="modal-body p-4">
+                <!-- Payment Modes Navigation Tabs -->
+                <ul class="nav nav-pills nav-fill mb-4 p-1 rounded-3 bg-light border" id="pills-tab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-bold py-2" id="pills-upi-tab" data-bs-toggle="pill" data-bs-target="#pills-upi" type="button" role="tab" onclick="setGatewayPaymentMode('UPI')">
+                            <i class="fa fa-qrcode me-1"></i> Scan &amp; Pay (UPI / QR)
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold py-2" id="pills-card-tab" data-bs-toggle="pill" data-bs-target="#pills-card" type="button" role="tab" onclick="setGatewayPaymentMode('Card / NetBanking')">
+                            <i class="fa fa-credit-card me-1"></i> Cards / NetBanking
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold py-2" id="pills-bank-tab" data-bs-toggle="pill" data-bs-target="#pills-bank" type="button" role="tab" onclick="setGatewayPaymentMode('Bank Transfer')">
+                            <i class="fa fa-university me-1"></i> Bank Account (NEFT)
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="pills-tabContent">
+                    <!-- Tab 1: UPI & QR Code -->
+                    <div class="tab-pane fade show active text-center" id="pills-upi" role="tabpanel">
+                        <div class="row align-items-center">
+                            <div class="col-md-6 text-center border-end">
+                                <div class="p-2 border rounded-4 d-inline-block shadow-sm bg-white mb-2">
+                                    <!-- Dynamic QR Code pointing to official UPI ID -->
+                                    <img id="gwQrCodeImg" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=8242427234@indianbk&pn=SHRI%20RAM%20JANKI%20MANDIR%20SEWA%20TRUST&am=1000&cu=INR" alt="UPI QR Code" style="width: 175px; height: 175px;">
+                                </div>
+                                <div class="small text-muted"><i class="fa fa-mobile-alt me-1"></i> Scan with any UPI app on phone</div>
+                            </div>
+                            <div class="col-md-6 text-start ps-md-4 mt-3 mt-md-0">
+                                <div class="mb-3">
+                                    <span class="small text-muted d-block">Official Trust UPI ID:</span>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control font-monospace fw-bold" value="8242427234@indianbk" readonly id="upiIdField">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText('8242427234@indianbk'); Swal.fire({ icon: 'success', title: 'UPI ID Copied!', text: '8242427234@indianbk copied to clipboard', timer: 1800, showConfirmButton: false });"><i class="fa fa-copy"></i></button>
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="small text-muted d-block mb-1">Supported UPI Apps:</span>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <span class="badge bg-light text-dark border p-2"><i class="fab fa-google-pay text-primary"></i> GPay</span>
+                                        <span class="badge bg-light text-dark border p-2"><i class="fa fa-mobile text-purple"></i> PhonePe</span>
+                                        <span class="badge bg-light text-dark border p-2"><i class="fa fa-wallet text-info"></i> Paytm</span>
+                                        <span class="badge bg-light text-dark border p-2"><i class="fa fa-university text-danger"></i> BHIM</span>
+                                    </div>
+                                </div>
+                                <div class="small text-success mt-2">
+                                    <i class="fa fa-check-circle me-1"></i> Beneficiary: <strong>SHRI RAM JANKI MANDIR SEWA TRUST</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Cards / NetBanking -->
+                    <div class="tab-pane fade" id="pills-card" role="tabpanel">
+                        <div class="p-3 border rounded-3 bg-light mb-3">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label small text-muted">Card Number</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white"><i class="fa fa-credit-card text-muted"></i></span>
+                                        <input type="text" class="form-control font-monospace" placeholder="4111 &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; 1111" value="4111 8888 2026 1001">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small text-muted">Valid Thru</label>
+                                    <input type="text" class="form-control" placeholder="MM/YY" value="12/28">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small text-muted">CVV</label>
+                                    <input type="password" maxlength="3" class="form-control" placeholder="&bull;&bull;&bull;" value="888">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="small text-muted text-center"><i class="fa fa-shield-alt text-success me-1"></i> End-to-end encrypted card processing.</div>
+                    </div>
+
+                    <!-- Tab 3: Direct Indian Bank Account -->
+                    <div class="tab-pane fade" id="pills-bank" role="tabpanel">
+                        <div class="card border-0 shadow-sm p-3 bg-light">
+                            <h6 class="fw-bold text-danger mb-2"><i class="fa fa-university me-1"></i> Official Indian Bank Seva Account</h6>
+                            <table class="table table-sm table-bordered bg-white mb-0 small">
+                                <tbody>
+                                    <tr>
+                                        <th style="width:35%;">Account Name</th>
+                                        <td class="fw-bold">SHRI RAM JANKI MANDIR SEWA TRUST</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Account Number</th>
+                                        <td class="fw-bold font-monospace fs-6 text-danger">8242427234</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Bank Name</th>
+                                        <td>INDIAN BANK</td>
+                                    </tr>
+                                    <tr>
+                                        <th>IFSC Code</th>
+                                        <td class="fw-bold font-monospace">IDIB000B510</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Branch</th>
+                                        <td>Babhnan Sugar Mill, Gonda, UP</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer with Final Payment Confirmation -->
+            <div class="modal-footer bg-light p-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger px-4 py-2 fw-bold shadow" onclick="launchRazorpayCheckout()">
+                    <i class="fa fa-lock me-1"></i> Pay with Razorpay Gateway &rarr;
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    function setAmount(amt) {
+        document.getElementById('customAmountInput').value = amt;
+        var presets = document.querySelectorAll('.amt-preset');
+        presets.forEach(function(btn) {
+            btn.classList.remove('btn-danger', 'active');
+            btn.classList.add('btn-outline-danger');
+            if (btn.innerText.indexOf(amt.toLocaleString('en-IN')) !== -1) {
+                btn.classList.remove('btn-outline-danger');
+                btn.classList.add('btn-danger', 'active');
+            }
+        });
+    }
+
+    function validateDonationName(input) {
+        const feedback = document.getElementById('donorNameFeedback');
+        if (!feedback) return;
+        const val = input.value.trim();
+        if (val.length === 0) {
+            feedback.style.display = 'none';
+            input.classList.remove('is-valid', 'is-invalid');
+            return;
+        }
+        feedback.style.display = 'block';
+        if (/^[a-zA-Z\s.]{3,50}$/.test(val)) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            feedback.className = 'small mt-1 text-success';
+            feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Valid Name';
+        } else {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            feedback.className = 'small mt-1 text-danger';
+            feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Please enter full name (letters only, min 3 chars)';
+        }
+    }
+
+    function validateDonationMobile(input) {
+        const feedback = document.getElementById('donorPhoneFeedback');
+        if (!feedback) return;
+        const val = input.value;
+        if (val.length === 0) {
+            feedback.style.display = 'none';
+            input.classList.remove('is-valid', 'is-invalid');
+            return;
+        }
+        feedback.style.display = 'block';
+        if (val.length === 10 && /^[6-9]/.test(val)) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            feedback.className = 'small mt-1 text-success';
+            feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Valid 10-digit Indian Mobile';
+        } else if (val.length > 0 && !/^[6-9]/.test(val)) {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            feedback.className = 'small mt-1 text-danger';
+            feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Mobile number must start with 6, 7, 8, or 9';
+        } else {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            feedback.className = 'small mt-1 text-warning';
+            feedback.innerHTML = '<i class="fa fa-info-circle me-1"></i> Enter ' + (10 - val.length) + ' more digit(s)';
+        }
+    }
+
+    function validateDonationEmail(input) {
+        const feedback = document.getElementById('donorEmailFeedback');
+        if (!feedback) return;
+        const val = input.value.trim();
+        if (val.length === 0) {
+            feedback.style.display = 'none';
+            input.classList.remove('is-valid', 'is-invalid');
+            return;
+        }
+        feedback.style.display = 'block';
+        if (/^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(val)) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            feedback.className = 'small mt-1 text-success';
+            feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Valid Email (80G receipt will be sent here)';
+        } else {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            feedback.className = 'small mt-1 text-danger';
+            feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Invalid email format (e.g. name@domain.com)';
+        }
+    }
+
+    function validateDonationPan(input) {
+        const feedback = document.getElementById('donorPanFeedback');
+        if (!feedback) return;
+        const val = input.value.trim().toUpperCase();
+        if (val.length === 0) {
+            feedback.style.display = 'none';
+            input.classList.remove('is-valid', 'is-invalid');
+            return;
+        }
+        feedback.style.display = 'block';
+        if (/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(val)) {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            feedback.className = 'small mt-1 text-success';
+            feedback.innerHTML = '<i class="fa fa-check-circle me-1"></i> Valid PAN Format (80G Tax Benefit Eligible)';
+        } else {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            feedback.className = 'small mt-1 text-danger';
+            feedback.innerHTML = '<i class="fa fa-times-circle me-1"></i> Invalid PAN (e.g. ABCDE1234F - 5 letters, 4 digits, 1 letter)';
+        }
+    }
+
+    function openPaymentGatewayModal() {
+        var nameInput = document.getElementById('donorNameInput');
+        var phoneInput = document.getElementById('donorPhoneInput');
+        var emailInput = document.getElementById('donorEmailInput');
+        var panInput = document.getElementById('donorPanInput');
+        var amtInput = document.getElementById('customAmountInput');
+
+        var name = nameInput.value.trim();
+        var phone = phoneInput.value.trim();
+        var email = emailInput ? emailInput.value.trim() : '';
+        var pan = panInput ? panInput.value.trim().toUpperCase() : '';
+        var amt = parseFloat(amtInput.value);
+
+        if (!name || !/^[a-zA-Z\s.]{3,50}$/.test(name)) {
+            nameInput.classList.add('is-invalid');
+            validateDonationName(nameInput);
+            Swal.fire({
+                icon: 'warning',
+                title: 'Valid Full Name Required',
+                text: 'Please enter a valid full name (at least 3 alphabetic letters, e.g. Ramesh Sharma).',
+                confirmButtonColor: '#e03e2d'
+            });
+            nameInput.focus();
+            return;
+        }
+
+        if (!phone || !/^[6-9]\d{9}$/.test(phone)) {
+            phoneInput.classList.add('is-invalid');
+            validateDonationMobile(phoneInput);
+            Swal.fire({
+                icon: 'warning',
+                title: 'Valid Mobile Number Required',
+                text: 'Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.',
+                confirmButtonColor: '#e03e2d'
+            });
+            phoneInput.focus();
+            return;
+        }
+
+        if (email.length > 0 && !/^[a-zA-Z0-9._%+-]+@@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+            emailInput.classList.add('is-invalid');
+            validateDonationEmail(emailInput);
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Email Address',
+                text: 'Please enter a valid email address (e.g. donor@example.com) to receive your 80G tax receipt.',
+                confirmButtonColor: '#e03e2d'
+            });
+            emailInput.focus();
+            return;
+        }
+
+        if (pan.length > 0 && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan)) {
+            panInput.classList.add('is-invalid');
+            validateDonationPan(panInput);
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid PAN Number',
+                text: 'Please enter a valid 10-character PAN number (e.g. ABCDE1234F), or leave blank if not claiming 80G.',
+                confirmButtonColor: '#e03e2d'
+            });
+            panInput.focus();
+            return;
+        }
+
+        if (isNaN(amt) || amt < 1) {
+            amtInput.classList.add('is-invalid');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Donation Amount Required',
+                text: 'Please enter a valid donation amount (minimum ₹1).',
+                confirmButtonColor: '#e03e2d'
+            });
+            amtInput.focus();
+            return;
+        }
+
+        launchRazorpayCheckout();
+    }
+
+    function launchRazorpayCheckout() {
+        var amt = parseFloat(document.getElementById('customAmountInput').value);
+        var name = document.getElementById('donorNameInput').value.trim();
+        var phone = document.getElementById('donorPhoneInput').value.trim();
+        var email = document.getElementById('donorEmailInput').value.trim();
+        var campSelect = document.getElementById('campaignSelect');
+        var causeTitle = campSelect.options[campSelect.selectedIndex].text;
+        var rzpKey = "@settings.RazorpayKeyId" || "rzp_test_1DP5mmOlF5G5ag";
+
+        if (!name || !phone || isNaN(amt) || amt <= 0) {
+            openPaymentGatewayModal();
+            return;
+        }
+
+        var options = {
+            "key": rzpKey,
+            "amount": Math.round(amt * 100),
+            "currency": "INR",
+            "name": "SHRI RAM JANKI MANDIR SEWA TRUST",
+            "description": "Seva Donation for " + causeTitle,
+            "image": "/assets/img/logo.png",
+            "prefill": {
+                "name": name,
+                "email": email || "donor@shriramjankitrust.com",
+                "contact": phone
+            },
+            "notes": {
+                "cause": causeTitle
+            },
+            "theme": {
+                "color": "#e03e2d"
+            },
+            "handler": function (response) {
+                // EXECUTED ONLY WHEN RAZORPAY PAYMENT IS SUCCESSFUL!
+                if (!response.razorpay_payment_id) {
+                    Swal.fire({ icon: 'error', title: 'Payment Failed', text: 'No transaction ID returned from payment gateway.', confirmButtonColor: '#e03e2d' });
+                    return;
+                }
+
+                // 1. Immediately backup completed payment to LocalStorage to protect against network drops
+                var payload = {
+                    amount: amt,
+                    donorName: name,
+                    donorPhone: phone,
+                    donorEmail: email,
+                    donorAddress: document.getElementById('donorAddressInput') ? document.getElementById('donorAddressInput').value : '',
+                    donorPan: document.getElementById('donorPanInput') ? document.getElementById('donorPanInput').value : '',
+                    campaignId: parseInt(document.getElementById('campaignSelect').value) || null,
+                    memberId: parseInt(document.getElementById('memberIdInput') ? document.getElementById('memberIdInput').value : 0) || null,
+                    razorpayPaymentId: response.razorpay_payment_id,
+                    paymentMode: 'Razorpay Online',
+                    timestamp: new Date().toISOString()
+                };
+
+                try {
+                    localStorage.setItem('sjt_pending_donation', JSON.stringify(payload));
+                } catch(e) {}
+
+                // 2. Perform Intelligent Verification with Auto-Retry
+                verifyDonationWithRetry(payload, 1);
+            },
+            "modal": {
+                "ondismiss": function() {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Payment Not Completed',
+                        text: 'Payment was cancelled or closed. No donation receipt has been generated.',
+                        confirmButtonColor: '#e03e2d',
+                        timer: 3500
+                    });
+                }
+            }
+        };
+
+        var rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (resp){
+            Swal.fire({
+                icon: 'error',
+                title: 'Payment Failed',
+                text: resp.error.description || 'Payment transaction failed. Please retry.',
+                confirmButtonColor: '#e03e2d'
+            });
+        });
+        rzp.open();
+    }
+
+    // Intelligent Payment Verification with Auto-Retry & Network Resilience
+    function verifyDonationWithRetry(payload, attempt) {
+        var maxAttempts = 3;
+        var loadingMsg = attempt > 1 
+            ? 'नेटवर्क धीमा है... पुनः प्रयास जारी है (प्रयास ' + attempt + '/' + maxAttempts + ')...'
+            : 'Please wait while your donation is verified and official 80G receipt is issued.';
+
+        Swal.fire({
+            title: 'Verifying Payment...',
+            html: '<p class="mb-2">' + loadingMsg + '</p><div class="small text-muted">Payment ID: <strong class="text-danger">' + payload.razorpayPaymentId + '</strong></div>',
+            allowOutsideClick: false,
+            didOpen: function() { Swal.showLoading(); }
+        });
+
+        // Controller with 15s timeout
+        var controller = new AbortController();
+        var timeoutId = setTimeout(function() { controller.abort(); }, 15000);
+
+        fetch('/Home/ConfirmGatewayDonation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        })
+        .then(function(res) {
+            clearTimeout(timeoutId);
+            return res.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                // Remove backup from localStorage on success
+                try { localStorage.removeItem('sjt_pending_donation'); } catch(e) {}
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'जय श्री राम! दान सफल रहा',
+                    html: '<div class="text-center"><p class="mb-2">Thank you for your noble seva! Your donation has been received successfully.</p><p class="fs-5 fw-bold text-danger mb-2">Receipt No: ' + data.receiptNumber + '</p><p class="text-muted small mb-0">Official 80G receipt has been emailed to you.</p></div>',
+                    confirmButtonColor: '#e03e2d',
+                    confirmButtonText: 'View Receipt / रसीद देखें'
+                }).then(function() {
+                    window.location.href = data.redirectUrl;
+                });
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Payment Verification Notice',
+                    text: data.message || 'Payment could not be verified automatically.',
+                    confirmButtonColor: '#e03e2d',
+                    showCancelButton: true,
+                    confirmButtonText: 'Retry Verification',
+                    cancelButtonText: 'Track Payment'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        verifyDonationWithRetry(payload, 1);
+                    } else {
+                        window.location.href = '/Home/TrackPayment?ref=' + encodeURIComponent(payload.razorpayPaymentId);
+                    }
+                });
+            }
+        })
+        .catch(function(err) {
+            clearTimeout(timeoutId);
+            // Network Failure / Timeout Handling
+            if (attempt < maxAttempts) {
+                setTimeout(function() {
+                    verifyDonationWithRetry(payload, attempt + 1);
+                }, 2500);
+            } else {
+                // All retries exhausted: show reassuring recovery dialog
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'नेटवर्क संपर्क टूटा / Network Interrupted',
+                    html: '<div class="text-start">' +
+                          '<p class="mb-2 text-danger fw-bold"><i class="fa fa-info-circle me-1"></i> यदि आपके खाते से पैसे कट गए हैं, तो कृपया बिल्कुल चिंता न करें!</p>' +
+                          '<p class="small text-muted mb-2">आपका पैसा पूरी तरह सुरक्षित है। आपका Payment Reference ID सुरक्षित कर लिया गया है:</p>' +
+                          '<div class="p-2 bg-light border rounded text-center fw-bold fs-6 mb-3 text-dark font-monospace">' + payload.razorpayPaymentId + '</div>' +
+                          '<p class="small text-muted mb-0">जैसे ही इंटरनेट कनेक्ट हो, नीचे "Retry Verification" पर क्लिक करके रसीद प्राप्त करें, या "Track Payment" पर जाएं।</p>' +
+                          '</div>',
+                    confirmButtonColor: '#e03e2d',
+                    confirmButtonText: 'Retry Verification / पुनः प्रयास करें',
+                    showCancelButton: true,
+                    cancelButtonText: 'Track Payment / रसीद खोजें',
+                    allowOutsideClick: false
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        verifyDonationWithRetry(payload, 1);
+                    } else {
+                        window.location.href = '/Home/TrackPayment?ref=' + encodeURIComponent(payload.razorpayPaymentId);
+                    }
+                });
+            }
+        });
+    }
+
+    // Auto-Recovery on Page Load if previous payment was interrupted
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            var rawPending = localStorage.getItem('sjt_pending_donation');
+            if (rawPending) {
+                var pending = JSON.parse(rawPending);
+                if (pending && pending.razorpayPaymentId) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'अपूर्ण रसीद मिली / Pending Receipt Found',
+                        html: '<div class="text-start">' +
+                              '<p class="mb-1">आपके द्वारा किया गया पिछला भुगतान मिला है:</p>' +
+                              '<div class="p-2 bg-light border rounded mb-2 small font-monospace"><strong>Payment ID:</strong> ' + pending.razorpayPaymentId + '<br><strong>राशि:</strong> ₹' + (pending.amount || '') + '</div>' +
+                              '<p class="small text-muted mb-0">क्या आप इसकी 80G टैक्स रसीद अभी जनरेट करना चाहते हैं?</p>' +
+                              '</div>',
+                        confirmButtonColor: '#e03e2d',
+                        confirmButtonText: 'हाँ, रसीद प्राप्त करें',
+                        showCancelButton: true,
+                        cancelButtonText: 'बाद में / Cancel'
+                    }).then(function(res) {
+                        if (res.isConfirmed) {
+                            verifyDonationWithRetry(pending, 1);
+                        }
+                    });
+                }
+            }
+        } catch(e) {}
+    });
+</script>
+}

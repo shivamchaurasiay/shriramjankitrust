@@ -1,0 +1,120 @@
+@model RamJankiNGO.Models.LoginDto
+@{
+    ViewData["Title"] = "Member & Donor Login";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="ul-breadcrumb">
+    <div class="ul-container container">
+        <h2 class="ul-breadcrumb-title">Member Portal</h2>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li>Member Login</li>
+        </ul>
+    </div>
+</div>
+
+<section class="ul-section-spacing" style="background: linear-gradient(135deg, #fff8f0 0%, #fff 100%);">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-5 col-md-8">
+                <div class="card shadow-lg border-0 p-4 p-md-5 rounded-4">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <span class="badge bg-danger text-white px-3 py-2 fs-6 rounded-pill">
+                                <i class="fa fa-user-lock me-1"></i> Member Access
+                            </span>
+                        </div>
+                        <h3 class="fw-bold text-dark mb-1">Member &amp; Donor Sign In</h3>
+                        <p class="text-muted small">Sign in to view donation history, download 80G tax receipts, and manage profile.</p>
+                    </div>
+
+                    @* Tab navigation for quick switch between Login and Register *@
+                    <ul class="nav nav-pills nav-fill mb-4 bg-light p-1 rounded-3">
+                        <li class="nav-item">
+                            <a class="nav-link active fw-bold bg-danger text-white rounded-3 py-2" href="/MemberPortal/Login">
+                                <i class="fa fa-sign-in-alt me-1"></i> Sign In
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark fw-bold rounded-3 py-2" href="/MemberPortal/Register">
+                                <i class="fa fa-user-plus me-1 text-danger"></i> Register
+                            </a>
+                        </li>
+                    </ul>
+
+                    @if (ViewBag.ErrorMessage != null)
+                    {
+                        <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3">
+                            <i class="fa fa-exclamation-triangle me-1"></i> @ViewBag.ErrorMessage
+                        </div>
+                    }
+                    @if (TempData["AuthSuccess"] != null)
+                    {
+                        <div class="alert alert-success py-2 px-3 small rounded-3 mb-3">
+                            <i class="fa fa-check-circle me-1"></i> @TempData["AuthSuccess"]
+                        </div>
+                    }
+
+                    <form method="post" action="/MemberPortal/Login" autocomplete="off">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-secondary">Mobile Number, Email, or Member ID</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white text-muted"><i class="fa fa-user"></i></span>
+                                <input type="text" asp-for="Mobile" autocomplete="off" class="form-control form-control-lg fs-6" required placeholder="Enter Mobile Number, Email, or Member ID" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-secondary">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white text-muted"><i class="fa fa-lock"></i></span>
+                                <input type="password" asp-for="Password" autocomplete="new-password" class="form-control form-control-lg fs-6" required placeholder="Enter your password" />
+                            </div>
+                            <div class="d-flex justify-content-end align-items-center mt-1">
+                                <a href="/MemberPortal/ForgotPassword" class="text-danger small fw-bold text-decoration-none">
+                                    Forgot Password? / पासवर्ड भूल गए?
+                                </a>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-danger btn-lg w-100 fw-bold shadow-sm py-2 mt-3">
+                            <i class="fa fa-sign-in-alt me-1"></i> Login to Portal
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-4 border-top pt-3">
+                        <p class="text-muted small mb-2">New donor or member? Create your account today:</p>
+                        <a href="/MemberPortal/Register" class="btn btn-outline-danger btn-sm px-4 fw-bold rounded-pill">
+                            <i class="fa fa-user-plus me-1"></i> Register as a Member / नया सदस्य पंजीकरण
+                        </a>
+                    </div>
+
+                    <div class="text-center mt-3 pt-2">
+                        <a href="/Admin/Account/Login" class="text-secondary small">
+                            <i class="fa fa-shield-alt me-1"></i> Are you an Administrator? Admin Panel Login &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    @if (Context.Request.Query.ContainsKey("receiptNo"))
+    {
+        var recNo = Context.Request.Query["receiptNo"].ToString();
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'जय श्री राम! दान सफल रहा',
+                    html: '<div class="text-center"><p class="mb-2">Thank you for your noble seva! Your donation has been received successfully.</p><p class="fs-5 fw-bold text-danger mb-2">Receipt No: @recNo</p><p class="text-muted small mb-0">Official 80G receipt has been sent to your email & mobile.<br>You can sign in below to view your full seva history.</p></div>',
+                    confirmButtonColor: '#e03e2d',
+                    confirmButtonText: 'OK / आगे बढ़ें'
+                });
+            });
+        </script>
+    }
+}

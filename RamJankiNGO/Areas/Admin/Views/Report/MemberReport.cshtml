@@ -1,0 +1,78 @@
+@model System.Data.DataTable
+@using System.Data
+@{
+    ViewData["Title"] = "Member Reports";
+    Layout = "~/Areas/Admin/Views/Shared/_adminLayout.cshtml";
+}
+
+<div class="page-body">
+    <div class="container-fluid">
+        <div class="page-title">
+            <div class="row">
+                <div class="col-6">
+                    <h4>Member Participation Report</h4>
+                </div>
+                <div class="col-6">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/Admin/Dashboard/Index"><i data-feather="home"></i></a></li>
+                        <li class="breadcrumb-item">Reports</li>
+                        <li class="breadcrumb-item active">Members</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="card shadow-sm border-0">
+            <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="f-w-600 mb-0"><i class="fa fa-users text-primary me-2"></i> Lifetime Member Contribution Summary</h5>
+                <a href="/Admin/Member/ExportToExcel" class="btn btn-outline-success btn-sm">
+                    <i class="fa fa-file-excel me-1"></i> Export Excel
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Member Code</th>
+                                <th>Full Name</th>
+                                <th>Mobile</th>
+                                <th>Email</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Donations Count</th>
+                                <th>Lifetime Donated</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model != null && Model.Rows.Count > 0)
+                            {
+                                foreach (DataRow row in Model.Rows)
+                                {
+                                    <tr>
+                                        <td><span class="badge bg-light text-primary border">@row["MemberCode"]</span></td>
+                                        <td class="f-w-600">@row["FullName"]</td>
+                                        <td>@row["Mobile"]</td>
+                                        <td>@(row["Email"] != DBNull.Value ? row["Email"].ToString() : "-")</td>
+                                        <td><span class="badge bg-info">@row["MemberType"]</span></td>
+                                        <td>@(Convert.ToInt32(row["Status"]) == 1 ? "Active" : "Inactive")</td>
+                                        <td>@row["TotalDonationsCount"]</td>
+                                        <td class="f-w-600 text-success">₹@Convert.ToDecimal(row["TotalDonated"]).ToString("N0")</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-4">No member records found.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

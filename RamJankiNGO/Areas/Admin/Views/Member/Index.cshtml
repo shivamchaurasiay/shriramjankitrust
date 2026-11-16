@@ -1,0 +1,131 @@
+@model System.Data.DataTable
+@using System.Data
+@{
+    ViewData["Title"] = "Members Directory";
+    Layout = "~/Areas/Admin/Views/Shared/_adminLayout.cshtml";
+}
+
+<div class="page-body">
+    <div class="container-fluid">
+        <div class="page-title">
+            <div class="row">
+                <div class="col-6">
+                    <h4>Members Directory</h4>
+                </div>
+                <div class="col-6">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/Admin/Dashboard/Index"><i data-feather="home"></i></a></li>
+                        <li class="breadcrumb-item">Members</li>
+                        <li class="breadcrumb-item active">List</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header pb-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <h5 class="f-w-600 mb-0"><i class="fa fa-users text-primary me-2"></i> All Registered Members (@Model.Rows.Count)</h5>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="/Admin/Member/AddEditMember" class="btn btn-primary btn-sm"><i class="fa fa-user-plus me-1"></i> Add Member</a>
+                            <a href="/Admin/Member/Import" class="btn btn-outline-success btn-sm"><i class="fa fa-file-excel me-1"></i> Excel Import</a>
+                            <a href="/Admin/Member/ExportToExcel" class="btn btn-outline-secondary btn-sm"><i class="fa fa-download me-1"></i> Export</a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Search Box -->
+                        <form method="get" action="/Admin/Member/Index" class="row g-2 mb-4">
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <input type="text" name="search" class="form-control" placeholder="Search by name, code, mobile, email..." value="@ViewBag.Search">
+                                    <button class="btn btn-primary" type="submit"><i class="fa fa-search"></i> Search</button>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                @if (!string.IsNullOrEmpty(ViewBag.Search))
+                                {
+                                    <a href="/Admin/Member/Index" class="btn btn-outline-danger">Clear Filter</a>
+                                }
+                            </div>
+                        </form>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover table-bordered align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Member Name</th>
+                                        <th>Contact Details</th>
+                                        <th>Location</th>
+                                        <th>Type</th>
+                                        <th>Total Donated</th>
+                                        <th>Status</th>
+                                        <th>Joined On</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model != null && Model.Rows.Count > 0)
+                                    {
+                                        foreach (DataRow row in Model.Rows)
+                                        {
+                                            <tr>
+                                                <td><span class="badge bg-light text-primary border">@row["MemberCode"]</span></td>
+                                                <td>
+                                                    <div class="f-w-600">@row["FullName"]</div>
+                                                </td>
+                                                <td>
+                                                    <div><i class="fa fa-phone text-muted me-1"></i> @row["Mobile"]</div>
+                                                    @if (row["Email"] != DBNull.Value && !string.IsNullOrEmpty(row["Email"].ToString()))
+                                                    {
+                                                        <div class="f-12 text-muted"><i class="fa fa-envelope text-muted me-1"></i> @row["Email"]</div>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @(row["City"] != DBNull.Value ? row["City"].ToString() : "") 
+                                                    @(row["State"] != DBNull.Value ? ", " + row["State"].ToString() : "")
+                                                </td>
+                                                <td><span class="badge bg-info">@row["MemberType"]</span></td>
+                                                <td class="f-w-600 text-success">₹@Convert.ToDecimal(row["TotalDonated"]).ToString("N0")</td>
+                                                <td>
+                                                    @if (Convert.ToInt32(row["Status"]) == 1)
+                                                    {
+                                                        <span class="badge bg-success">Active</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-danger">Inactive</span>
+                                                    }
+                                                </td>
+                                                <td>@Convert.ToDateTime(row["JoinedAt"]).ToString("dd/MM/yyyy")</td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a href="/Admin/Member/AddEditMember/@row["MemberId"]" class="btn btn-outline-primary" title="Edit">
+                                                            <i class="fa fa-edit"></i>
+                                                        </a>
+                                                        <a href="/Admin/Member/ToggleStatus/@row["MemberId"]" class="btn btn-outline-warning" title="Toggle Status" onclick="return confirm('Change status of this member?');">
+                                                            <i class="fa fa-sync-alt"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td colspan="9" class="text-center text-muted py-4">No members found. Click "Add Member" or "Excel Import" to add members.</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

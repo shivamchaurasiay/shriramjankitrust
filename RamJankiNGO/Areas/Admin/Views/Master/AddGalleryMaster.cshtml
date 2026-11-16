@@ -1,0 +1,80 @@
+@model RamJankiNGO.Models.GalleryMasterDto
+@{
+    bool isEdit = Model != null && Model.GalleryMId > 0;
+    ViewData["Title"] = isEdit ? "Edit Gallery Album" : "Add Gallery Album";
+    Layout = "~/Areas/Admin/Views/Shared/_adminLayout.cshtml";
+}
+
+<div class="page-body">
+    <div class="container-fluid">
+        <div class="page-title">
+            <div class="row">
+                <div class="col-6">
+                    <h4>@(isEdit ? "Edit Gallery Album" : "Add Gallery Album")</h4>
+                </div>
+                <div class="col-6">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="/Admin/Dashboard/Index">
+                                <i class="fa fa-home"></i>
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item"><a href="/Admin/Master/GalleryMasterList">Gallery Albums</a></li>
+                        <li class="breadcrumb-item active">@(isEdit ? "Edit Album" : "Add Album")</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container-fluid starts-->
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xl-7 col-lg-9 mx-auto">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                        <h5 class="f-w-600 mb-0">
+                            <i class="fa fa-folder-open text-warning me-2"></i>
+                            @(isEdit ? "Edit Album Details" : "Create New Album / Category")
+                        </h5>
+                        <a href="/Admin/Master/GalleryMasterList" class="btn btn-outline-secondary btn-sm">
+                            <i class="fa fa-arrow-left me-1"></i> Back to Albums
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="/Admin/Master/AddGalleryMaster">
+                            <input type="hidden" asp-for="GalleryMId" />
+
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label f-w-600" for="GalleryName">Album / Category Name <span class="text-danger">*</span></label>
+                                    <input class="form-control" asp-for="GalleryName" id="GalleryName" type="text" placeholder="e.g. Free Medical Camps 2026, Annakshetra Seva" required autocomplete="off" />
+                                    <span class="text-danger" asp-validation-for="GalleryName"></span>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label f-w-600" for="Status">Status</label>
+                                    <select class="form-select" asp-for="Status" id="Status">
+                                        <option value="1">Active</option>
+                                        <option value="0">Inactive</option>
+                                    </select>
+                                    <span class="text-danger" asp-validation-for="Status"></span>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                                <a href="/Admin/Master/GalleryMasterList" class="btn btn-outline-secondary">
+                                    <i class="fa fa-times me-1"></i> Cancel
+                                </a>
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fa fa-save me-1"></i> @(isEdit ? "Update Album" : "Create Album")
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Container-fluid Ends-->
+</div>
